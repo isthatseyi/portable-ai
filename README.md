@@ -152,7 +152,7 @@ The Model Store in the app filters recommendations by your detected RAM automati
 |---------|-------------|------------|--------------|-------------|
 | Price | **Free** | $129–$469 | ~$40–50 | ~$30–60 |
 | macOS | ✅ | ❌ | ❌ | ✅ |
-| Windows | ✅ | ✅ | ✅ | ❌ |
+| Windows | ✅ | ✅ | ✅ | ✅ |
 | Cross-platform (same drive) | ✅ | ❌ | ❌ | ❌ |
 | Open source | ✅ | ❌ | ❌ | ❌ |
 | Choose your own model | ✅ | Limited | Limited | Limited |

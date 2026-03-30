@@ -140,8 +140,8 @@ USB Drive (exFAT)
 
 | RAM | Model | Size | Notes |
 |-----|-------|------|-------|
-| 8 GB | Llama 3.2 3B, Phi-3 Mini | ~2–2.5 GB | Good for basic Q&A and writing |
-| 16 GB | Llama 3.1 8B, Mistral 7B, Gemma 2 9B | ~4–5 GB | Strong general-purpose performance |
+| 8 GB | Llama 3.2 3B, Phi-3 Mini, Deepseek-R1 7B | ~2–2.5 GB | Good for basic Q&A and writing |
+| 16 GB | Llama 3.1 8B, Deepseek-R1 14B, Gemma 3 12B | ~4–5 GB | Strong general-purpose performance |
 | 32 GB+ | Llama 3.1 70B (q4), Qwen 2.5 32B | ~20–40 GB | Near-cloud quality, slower on USB |
 
 The Model Store in the app filters recommendations by your detected RAM automatically.
@@ -165,7 +165,7 @@ The Model Store in the app filters recommendations by your detected RAM automati
 The app is not code-signed. Run this once:
 
 ```bash
-xattr -rd com.apple.quarantine /Volumes/YOUR_DRIVE/PortableAI.app
+xattr -rd com.apple.quarantine /Volumes/**YOUR_DRIVE**/PortableAI.app
 ```
 
 Or right-click → Open → Open on first launch.

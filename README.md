@@ -2,7 +2,7 @@
 
 A cross-platform portable LLM app. Download a model once, then run anywhere with no internet.
 
-![Demo](screenshots/demo.gif)
+![Chat](screenshots/chat-response-dark.png)
 
 ## What This Is
 
@@ -12,11 +12,9 @@ The same physical drive works on both operating systems.
 
 ## Why
 
-Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgridai.app/) is Windows-only and costs $129–$469. Products like [Vision1 Mini](https://vision1.ai/) and [Docket Mini](https://docket.ai/) are hardware-locked to a single OS. This project works on Mac *and* Windows from the same drive, and the source code is free.
+Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgridai.app/) is Windows-only and costs $129–$469. Products like [Vision1 Mini](https://vision1.ai/) and [Docket Mini](https://docket.ai/) are hardware-locked to a single OS. This project works on Mac *and* Windows from the same drive, and the source code is available.
 
 ## Features
-
-These are the features actually implemented in the current codebase:
 
 - **Streaming chat** — real-time token-by-token response rendering via Ollama's `/api/chat` endpoint
 - **Markdown rendering** — headings, bold/italic, lists, blockquotes, tables, and inline code
@@ -52,11 +50,19 @@ These are the features actually implemented in the current codebase:
 
 | Dark Mode | Light Mode |
 |-----------|------------|
-| ![Dark mode](screenshots/dark-mode.png) | ![Light mode](screenshots/light-mode.png) |
+| ![Dark mode](screenshots/chat-response-dark.png) | ![Light mode](screenshots/chat-response-light.png) |
 
-| Settings | Sidebar |
-|----------|---------|
-| ![Settings](screenshots/settings.png) | ![Sidebar](screenshots/sidebar.png) |
+| Settings (Chat & Generation) | Settings (Personality) |
+|------------------------------|------------------------|
+| ![Settings](screenshots/settings-chat-dark.png) | ![Settings light](screenshots/settings-personality-light.png) |
+
+| Model Store | Model Selector |
+|-------------|----------------|
+| ![Model Store](screenshots/model-store.png) | ![Model Selector](screenshots/model-selector-closeup.png) |
+
+| Code Highlighting | Personality (Dark) |
+|-------------------|--------------------|
+| ![Code block](screenshots/code-block.png) | ![Personality dark](screenshots/settings-personality-dark.png) |
 
 ## Quick Start
 
@@ -72,8 +78,8 @@ These are the features actually implemented in the current codebase:
 1. Format your USB drive as **exFAT** (works on both Mac and Windows)
 2. Download the latest release and extract it to the drive
 3. Launch the app:
-   - **Mac:** Open the `.app` bundle
-   - **Windows:** Run `PortableAI.exe`
+   - **Mac:** Double-click `PortableAI.app`
+   - **Windows:** Double-click `PortableAI.exe`
 4. The setup wizard will walk you through choosing a theme and downloading a model (one-time, requires internet)
 5. Done. After the initial download, the app works fully offline.
 
@@ -91,10 +97,11 @@ These are the features actually implemented in the current codebase:
 
 ```
 USB Drive (exFAT)
-├── PortableAI.app/              # macOS app bundle (or PortableAI.exe on Windows)
+├── PortableAI.app/              # macOS app bundle
 │   └── Contents/
 │       └── Resources/
-│           └── ollama-macos     # embedded Ollama binary
+│           └── ollama-darwin    # embedded Ollama binary
+├── PortableAI.exe               # Windows launcher
 ├── app_data/
 │   ├── models/                  # Ollama model blobs and manifests
 │   │   ├── blobs/
@@ -106,10 +113,14 @@ USB Drive (exFAT)
 │   │   ├── portable-settings.json  # internal config (custom model path, etc.)
 │   │   └── settings.json           # user preferences (theme, accent, temperature, etc.)
 │   ├── resources/               # user-placed override binaries
-│   └── scripts/
-│       ├── stop.command         # emergency kill script (Mac)
-│       └── stop.bat             # emergency kill script (Windows)
+│   ├── scripts/
+│   │   ├── stop.command         # emergency kill script (Mac)
+│   │   └── stop.bat             # emergency kill script (Windows)
+│   └── windows/                 # unpacked Electron app (Windows only)
+│       └── PortableAI.exe       # actual Electron executable
 ```
+
+> On Windows, the root `PortableAI.exe` is a lightweight launcher that sets up the working directory and hands off to `app_data/windows/PortableAI.exe`. Run the one at the root.
 
 ### Launch Sequence
 
@@ -120,7 +131,7 @@ USB Drive (exFAT)
 5. The embedded Ollama binary is located (checking `app_data/resources/` for overrides, then the bundled binary, then fallbacks)
 6. On macOS, the binary gets `chmod 755` and `xattr -rd com.apple.quarantine` to bypass Gatekeeper
 7. Ollama is spawned with `serve`, pointing `OLLAMA_MODELS` at `app_data/models/` and `OLLAMA_HOST` at `127.0.0.1:<port>`
-8. The app waits ~1.5s, confirms Ollama is responding via `/api/tags`, and writes a `runtime.json`
+8. The app waits ~3s, confirms Ollama is responding via `/api/tags`, and writes a `runtime.json`
 9. The first available model is preloaded into RAM (fire-and-forget)
 10. The Electron BrowserWindow loads `webui/index.html`
 11. On quit, Ollama is killed and `runtime.json` is cleaned up
@@ -144,7 +155,7 @@ USB Drive (exFAT)
 | 16 GB | Llama 3.1 8B, Deepseek-R1 14B, Gemma 3 12B | ~4–5 GB | Strong general-purpose performance |
 | 32 GB+ | Llama 3.1 70B (q4), Qwen 2.5 32B | ~20–40 GB | Near-cloud quality, slower on USB |
 
-The Model Store in the app filters recommendations by your detected RAM automatically.
+The Model Store filters recommendations by your detected RAM automatically.
 
 ## Comparison
 
@@ -154,7 +165,7 @@ The Model Store in the app filters recommendations by your detected RAM automati
 | macOS | ✅ | ❌ | ❌ | ✅ |
 | Windows | ✅ | ✅ | ✅ | ✅ |
 | Cross-platform (same drive) | ✅ | ❌ | ❌ | ❌ |
-| Open source | ✅ | ❌ | ❌ | ❌ |
+| Source available | ✅ | ❌ | ❌ | ❌ |
 | Choose your own model | ✅ | Limited | Limited | Limited |
 | Hardware included | ❌ (BYO drive) | ✅ | ✅ | ✅ |
 
@@ -165,7 +176,7 @@ The Model Store in the app filters recommendations by your detected RAM automati
 The app is not code-signed. Run this once:
 
 ```bash
-xattr -rd com.apple.quarantine /Volumes/**YOUR_DRIVE**/PortableAI.app
+xattr -rd com.apple.quarantine /Volumes/YOUR_DRIVE/PortableAI.app
 ```
 
 Or right-click → Open → Open on first launch.
@@ -216,12 +227,13 @@ npm run dist:all      # macOS + Windows + Linux
 npm run pack
 ```
 
-You'll need to supply your own Ollama binaries:
-- **macOS:** Place `ollama-macos` in `resources/`
-- **Windows:** Place `ollama.exe` and the `lib/` folder in `resources/`
+You'll need to supply your own Ollama binaries before packaging:
 
-See `package.json` → `build.mac.extraResources` and `build.win.extraResources` for the expected paths.
+- **macOS:** Place `ollama-darwin` in `resources/`
+- **Windows:** Place `ollama.exe` in `resources/`
+
+See `package.json` → `build.mac.extraResources` and `build.win.extraResources` for exact paths.
 
 ## License
 
-[MIT](LICENSE) — Copyright © 2026 Sammuel Oluwaseyi Johnson
+Copyright © 2026 Sammuel Oluwaseyi Johnson — All Rights Reserved. See [LICENSE](LICENSE) for details.

@@ -2,6 +2,8 @@
 
 A cross-platform portable LLM app. Download a model once, then run anywhere with no internet.
 
+**[Get it free on Gumroad](https://seyijohnson.gumroad.com/l/portable-ai)**
+
 ![Chat](screenshots/chat-response-dark.png)
 
 ## What This Is
@@ -61,7 +63,7 @@ Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgr
 ### Setup
 
 1. Format your USB drive as **exFAT** (works on both Mac and Windows)
-2. Download the latest release and extract it to the drive
+2. **[Download free on Gumroad](https://seyijohnson.gumroad.com/l/portable-ai)** and extract it to the drive
 3. Launch the app:
    - **Mac:** Double-click `PortableAI.app`
    - **Windows:** Double-click `PortableAI.exe`

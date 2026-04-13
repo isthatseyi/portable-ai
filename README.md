@@ -16,36 +16,21 @@ Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgr
 
 ## Features
 
-- **Streaming chat** - real-time token-by-token response rendering via Ollama's `/api/chat` endpoint
-- **Markdown rendering** - headings, bold/italic, lists, blockquotes, tables, and inline code
-- **Code syntax highlighting** - keyword, string, comment, and number highlighting with a copy-code button per block
-- **Conversation history** - sidebar with saved chat sessions, search, rename, and delete
-- **Dark and light themes** - toggle between dark and light mode, persisted across sessions
-- **6 accent colors** - purple, blue, green, orange, pink, teal
-- **Model selector** - Gemini-style model picker in the input area; switch models mid-session
-- **Model Store** - built-in browser for downloading models, filtered by RAM tier, OS, and category (General, Code, Reasoning, Compact), with inline download progress and drive space indicator
+- **Streaming chat** - real-time token-by-token responses via Ollama's `/api/chat` endpoint
+- **Model Store** - browse and download models filtered by RAM, OS, and category, with download progress and drive space indicator
+- **Model selector** - switch models mid-conversation from the input area
+- **Dark and light themes** - with 6 accent colors (purple, blue, green, orange, pink, teal)
+- **Markdown and code rendering** - headings, lists, tables, blockquotes, and syntax-highlighted code blocks with copy button
+- **Conversation history** - sidebar with saved sessions, search, rename, and delete
 - **Settings panel** - 6 tabs: General, Chat & Generation, Models, Behavior & Personality, Memory, Model Overrides
-- **Temperature control** - Precise / Balanced / Creative presets (0.2 / 0.6 / 0.9)
-- **Context length** - configurable: 2048, 4096, 8192, 16384 tokens
-- **System instructions** - per-model or global, with behavior scope selector
-- **Personalization** - "About You" field, custom instructions, base style presets (General Assistant, Teacher/Tutor, Coder, Summarizer, Planner/Coach), and tone presets
-- **Memory system** - opt-in memory that persists facts across conversations, with auto-cleanup, retention limits, search, and a management UI
-- **Model overrides** - per-model settings configuration
-- **Install mode toggle** - direct install or cache-and-move (faster for flash drives)
-- **First-run setup wizard** - hardware detection, model recommendation by RAM, theme/accent selection, guided model download with progress bar, speed, and ETA
-- **"Install Later" option** - skip model download during setup and install from the Model Store later
-- **Full app migration** - copy the entire app (executables + models) to a new drive from within the UI
-- **Custom model directory** - point Ollama at any folder for model storage
-- **Dynamic port scanning** - finds a free port in the 11434-11440 range so it doesn't conflict with a system Ollama
-- **Embedded Ollama lifecycle** - auto-start on launch, auto-stop on quit, quarantine attribute removal on macOS
-- **Model preloading** - first available model is loaded into RAM at startup (fire-and-forget)
-- **Emergency stop scripts** - auto-generated `stop.command` (Mac) and `stop.bat` (Windows) in `app_data/scripts/`
-- **Old-path migration** - automatically migrates `ollama_models/`, `appdata/`, and `ollama-embedded.log` from pre-v2 layouts
-- **Save & Exit** - graceful shutdown button that stops Ollama and quits the app
-- **Jump to bottom** - scroll-to-bottom button when the chat overflows
-- **Copy / edit / regenerate** - hover tools on message bubbles
-- **Keyboard shortcuts** - `Cmd/Ctrl+B` toggle sidebar, `Cmd/Ctrl+K` new chat, `Enter` send, `Shift+Enter` newline
-
+- **Personalization** - system instructions, "About You" field, custom instructions, base style presets, and tone presets
+- **Memory system** - opt-in persistent memory across conversations with auto-cleanup, retention limits, and management UI
+- **Temperature and context controls** - Precise / Balanced / Creative presets; configurable context length up to 16k tokens
+- **First-run setup wizard** - hardware detection, model recommendation by RAM, theme selection, guided download with progress and ETA
+- **Cross-platform portability** - same exFAT drive works on Mac and Windows; embedded Ollama starts and stops automatically
+- **Full app migration** - copy the entire app to a new drive from within the UI
+- **Emergency stop scripts** - auto-generated kill scripts for Mac (`stop.command`) and Windows (`stop.bat`)
+- **Keyboard shortcuts** - `Cmd/Ctrl+B` sidebar, `Cmd/Ctrl+K` new chat, `Enter` send, `Shift+Enter` newline
 ## Screenshots
 
 | Dark Mode | Light Mode |
@@ -97,27 +82,27 @@ Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgr
 
 ```
 USB Drive (exFAT)
-âââ PortableAI.app/              # macOS app bundle
-â   âââ Contents/
-â       âââ Resources/
-â           âââ ollama-darwin    # embedded Ollama binary
-âââ PortableAI.exe               # Windows launcher
-âââ app_data/
-â   âââ models/                  # Ollama model blobs and manifests
-â   â   âââ blobs/
-â   â   âââ manifests/
-â   âââ data/
-â   â   âââ sessions/            # saved chat history (JSON)
-â   â   âââ ollama.log           # runtime log
-â   âââ config/
-â   â   âââ portable-settings.json  # internal config (custom model path, etc.)
-â   â   âââ settings.json           # user preferences (theme, accent, temperature, etc.)
-â   âââ resources/               # user-placed override binaries
-â   âââ scripts/
-â   â   âââ stop.command         # emergency kill script (Mac)
-â   â   âââ stop.bat             # emergency kill script (Windows)
-â   âââ windows/                 # unpacked Electron app (Windows only)
-â       âââ PortableAI.exe       # actual Electron executable
++-- PortableAI.app/              # macOS app bundle
+|   +-- Contents/
+|       +-- Resources/
+|           +-- ollama-darwin    # embedded Ollama binary
++-- PortableAI.exe               # Windows launcher
++-- app_data/
+    +-- models/                  # Ollama model blobs and manifests
+    |   +-- blobs/
+    |   +-- manifests/
+    +-- data/
+    |   +-- sessions/            # saved chat history (JSON)
+    |   +-- ollama.log           # runtime log
+    +-- config/
+    |   +-- portable-settings.json  # internal config
+    |   +-- settings.json           # user preferences (theme, accent, etc.)
+    +-- resources/               # user-placed override binaries
+    +-- scripts/
+    |   +-- stop.command         # emergency kill script (Mac)
+    |   +-- stop.bat             # emergency kill script (Windows)
+    +-- windows/                 # unpacked Electron app (Windows only)
+        +-- PortableAI.exe       # actual Electron executable
 ```
 
 > On Windows, the root `PortableAI.exe` is a lightweight launcher that sets up the working directory and hands off to `app_data/windows/PortableAI.exe`. Run the one at the root.

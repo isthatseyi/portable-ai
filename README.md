@@ -230,33 +230,6 @@ If the app crashes or responses are garbled, your model is too large for your av
 - [ ] Multi-user support
 - [ ] Plugin system
 
-## Building from Source
-
-```bash
-# Clone the repo
-git clone https://github.com/isthatseyi/portable-ai.git
-cd portable-ai
-
-# Install dependencies
-npm install
-
-# Run in development mode
-npm start
-
-# Package for distribution
-npm run dist          # current platform
-npm run dist:all      # macOS + Windows + Linux
-
-# Build unpacked (for testing)
-npm run pack
-```
-
-You'll need to supply your own Ollama binaries before packaging:
-
-- **macOS:** Place `ollama-darwin` in `resources/`
-- **Windows:** Place `ollama.exe` in `resources/`
-
-See `package.json` for `build.mac.extraResources` and `build.win.extraResources` paths.
 
 ## License
 

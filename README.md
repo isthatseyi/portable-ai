@@ -193,6 +193,28 @@ Yes. The bundled Ollama binary runs natively on Apple Silicon (M1/M2/M3/M4) Macs
 
 You can download as many models as your drive has space for. Switch between them mid-conversation using the model selector in the input area. Only one model is loaded into RAM at a time.
 
+## Verify Your Download
+
+SHA-256 checksums (files exactly as served by Gumroad):
+
+- `PortableAi-mac.zip`: 2ecbdd33f948d784c75d388258e1f4c05dbe605c9ccd4ee605046c693f313c66
+- `PortableAi-windows.zip`: 9f3870d8fa7bf70ff7f8b3f8a1d930e52646c8b612828c105e8926d50c00ce6b
+
+VirusTotal reports:
+
+- Windows launcher: https://www.virustotal.com/gui/file/4fc0b7dcc4683e5107ea8b964ddc8f5fa4ef71aeddba2a2ff2499d32c30f2223
+- Windows app: https://www.virustotal.com/gui/file/ea73ffdf0030a33d7cd93ce62a7367970d96e78d486390a1932d352f68792432
+- macOS app binary: https://www.virustotal.com/gui/file/86dde3af906c9c30c21a71844568da834df230c52f9d7b0987e8af947c134035
+- Embedded Ollama binaries (unmodified official releases, verifiable by hash): https://www.virustotal.com/gui/file/1a0ac3a49e96cc0f5d81dea0f48f80b1f3fe04c36113e74d52aea92f41b77009, https://www.virustotal.com/gui/file/45993128924d6b01d12c9078d8ac740d6401cf74ece498054917a45f38d447b3
+
+The app is not code-signed yet. If you prefer to sandbox it, it runs fine from a folder inside a VM.
+
+### Why the Windows launcher shows antivirus detections
+
+A handful of engines flag the root `PortableAI.exe`. Every one of those detections is a generic machine-learning or heuristic verdict, not a match for any known malware family. The actual labels are things like `ML.Attribute.HighConfidence` (Elastic), `Static AI - Suspicious PE` (MaxSecure), `malicious_confidence_70%` (CrowdStrike), `Wacatac.B!ml` (Cynet, a well-documented false-positive bucket), and `Trojan.Malware...susgen` (Fortinet, where "susgen" stands for "suspected generic").
+
+The reason is simple: `PortableAI.exe` is a small, unsigned launcher stub that was freshly built and is not yet widely distributed. Low prevalence plus the absence of a code-signing certificate is exactly the profile that machine-learning antivirus models score as risky, independent of what the program actually does. For comparison, the 211 MB main application and the embedded Ollama binaries (linked above) scan completely clean. Code signing is planned and will clear these flags.
+
 ## Troubleshooting
 
 ### macOS: "PortableAI is damaged" or Gatekeeper block

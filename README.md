@@ -156,7 +156,6 @@ All sizes are approximate at Q4_K_M quantization. The Model Store filters recomm
 | macOS | Yes | No | No | Yes |
 | Windows | Yes | Yes | Yes | Yes |
 | Cross-platform (same drive) | Yes | No | No | No |
-| Source available | Yes | No | No | No |
 | Choose your own model | Yes | Limited | Limited | Limited |
 | Hardware included | No (BYO drive) | Yes | Yes | Yes |
 

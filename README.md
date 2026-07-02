@@ -2,8 +2,6 @@
 
 A cross-platform portable LLM app. Download a model once, then run anywhere with no internet.
 
-**[Get it free on Gumroad](https://seyijohnson.gumroad.com/l/portable-ai)**
-
 ![Chat](screenshots/chat-response-dark.png)
 
 ## What This Is
@@ -12,65 +10,82 @@ An Electron app that bundles [Ollama](https://ollama.com) on a single exFAT-form
 
 The same physical drive works on both operating systems.
 
+This repository is **source-only**: the multi-gigabyte Ollama runtime and models are not in git. After cloning, `setup.sh` / `setup.ps1` downloads the official Ollama release (sha256-verified) and drops it in place.
+
 ## Why
 
-Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgridai.app/) is Windows-only and costs $129-$469. Products like [Vision1 Mini](https://vision1.ai/) and [Docket Mini](https://docket.ai/) are hardware-locked to a single OS. This project works on Mac *and* Windows from the same drive.
+Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgridai.app/) is Windows-only and costs $129–$469. Products like [Vision1 Mini](https://vision1.ai/) and [Docket Mini](https://docket.ai/) are hardware-locked to a single OS. This project works on Mac *and* Windows from the same drive.
 
 ## Features
 
-- **Streaming chat** - real-time token-by-token responses via Ollama's `/api/chat` endpoint
-- **Model Store** - browse and download models filtered by RAM, OS, and category, with download progress and drive space indicator
-- **Model selector** - switch models mid-conversation from the input area
-- **Dark and light themes** - with 6 accent colors (purple, blue, green, orange, pink, teal)
-- **Markdown and code rendering** - headings, lists, tables, blockquotes, and syntax-highlighted code blocks with copy button
-- **Conversation history** - sidebar with saved sessions, search, rename, and delete
-- **Settings panel** - 6 tabs: General, Chat & Generation, Models, Behavior & Personality, Memory, Model Overrides
-- **Personalization** - system instructions, "About You" field, custom instructions, base style presets, and tone presets
-- **Memory system** - opt-in persistent memory across conversations with auto-cleanup, retention limits, and management UI
-- **Temperature and context controls** - Precise / Balanced / Creative presets; configurable context length up to 16k tokens
-- **First-run setup wizard** - hardware detection, model recommendation by RAM, theme selection, guided download with progress and ETA
-- **Cross-platform portability** - same exFAT drive works on Mac and Windows; embedded Ollama starts and stops automatically
-- **Full app migration** - copy the entire app to a new drive from within the UI
-- **Emergency stop scripts** - auto-generated kill scripts for Mac (`stop.command`) and Windows (`stop.bat`)
-- **Keyboard shortcuts** - `Cmd/Ctrl+B` sidebar, `Cmd/Ctrl+K` new chat, `Enter` send, `Shift+Enter` newline
+- **Streaming chat** — real-time token-by-token rendering via Ollama's API, with per-message token count and tokens/sec
+- **Single-file UI** — the entire chat interface is one self-contained `index.html`; zero CDN or network dependencies
+- **Conversation history** — IndexedDB-backed storage with new/rename/delete, sorted by recent activity, survives cache clears
+- **Markdown rendering** — headings, bold/italic, lists, blockquotes, tables, inline code
+- **Code syntax highlighting** — with a copy button on every code block
+- **Status bar** — live server dot, active model, last-response tokens/sec, and port
+- **Dark and light themes + 6 accent colors** — persisted across sessions
+- **Model selector & Model Store** — switch models mid-session; built-in browser for downloading models filtered by RAM tier, with progress and drive-space indicator
+- **Settings panel** — General, Chat & Generation, Models, Behavior & Personality, Memory, Model Overrides
+- **Temperature & context length controls** — Precise / Balanced / Creative presets; 2048–16384 token context
+- **Personalization & memory** — system instructions, style/tone presets, opt-in cross-conversation memory with management UI
+- **First-run setup wizard** — hardware detection, model recommendation by RAM, guided download
+- **Full app migration** — copy the entire app (executables + models) to a new drive from within the UI
+- **Dynamic port scanning** — finds a free port in 11434–11440, or reuses an already-running Ollama
+- **Embedded Ollama lifecycle** — auto-start on launch, auto-stop on quit, macOS quarantine/Gatekeeper handling
+- **GPU acceleration** — full CUDA bundle on Windows (including RTX 50-series/Blackwell), Metal/MLX on Mac
+- **No junk on the host** — models, Electron caches, and app data all live on the drive (`OLLAMA_MODELS` + relocated `userData`)
+- **Export conversation as Markdown**, smart auto-scroll with "↓ New messages", auto-resizing input, keyboard shortcuts (`Cmd/Ctrl+B` sidebar, `Cmd/Ctrl+K` new chat, `Enter` send, `Shift+Enter` newline)
+- **Fallback launchers** — `MacTerminal.command` and `Windows.bat` run Ollama + the UI in a plain browser, no Electron required
+
 ## Screenshots
 
 | Dark Mode | Light Mode |
 |-----------|------------|
-| ![Dark mode chat](screenshots/chat-response-dark.png) | ![Light mode chat](screenshots/chat-response-light.png) |
+| ![Dark mode](screenshots/chat-response-dark.png) | ![Light mode](screenshots/chat-response-light.png) |
 
 | Settings (Chat & Generation) | Settings (Personality) |
 |------------------------------|------------------------|
-| ![Chat & Generation settings](screenshots/settings-chat-dark.png) | ![Personality settings in light mode](screenshots/settings-personality-light.png) |
+| ![Settings](screenshots/settings-chat-dark.png) | ![Settings light](screenshots/settings-personality-light.png) |
 
 | Model Store | Model Selector |
 |-------------|----------------|
-| ![Model Store with RAM-based filtering](screenshots/model-store.png) | ![Inline model picker](screenshots/model-selector-closeup.png) |
+| ![Model Store](screenshots/model-store.png) | ![Model Selector](screenshots/model-selector-closeup.png) |
 
-| Code Highlighting | Personality (Dark) |
-|-------------------|--------------------|
-| ![Syntax-highlighted Python code block](screenshots/code-block.png) | ![Personality settings in dark mode](screenshots/settings-personality-dark.png) |
-
-## Quick Start
+## Getting Started (from source)
 
 ### Requirements
 
-- USB 3.0+ drive (USB 2.0 works but model loading will be slow)
-- 8 GB RAM minimum (16 GB recommended)
-- macOS 12+ or Windows 10/11
-- Internet connection for the first-time model download only
+- Node.js 18+ and npm
+- macOS 12+ (Apple Silicon **or** Intel) or Windows 10/11
+- ~4 GB free disk for the runtimes (2 GB download for Windows CUDA)
+- To *use* the stick: 8 GB RAM minimum (16 GB recommended), USB 3.0+
 
-### Setup
+### Build
 
-1. Format your USB drive as **exFAT** (works on both Mac and Windows)
-2. **[Download free on Gumroad](https://seyijohnson.gumroad.com/l/portable-ai)** and extract it to the drive
-3. Launch the app:
-   - **Mac:** Double-click `PortableAI.app`
-   - **Windows:** Double-click `PortableAI.exe`
-4. The setup wizard will walk you through choosing a theme and downloading a model (one-time, requires internet)
-5. Done. After the initial download, the app works fully offline.
+```bash
+git clone https://github.com/isthatseyi/portable-ai.git
+cd portable-ai
 
-> **Note:** Ollama binaries are included in the release. You don't need to install Ollama separately. You only need internet once to pull a model.
+# Fetch the embedded Ollama runtime (official release, sha256-verified)
+./setup.sh          # current OS only
+./setup.sh --all    # Mac + Windows (to build the cross-platform stick)
+# Windows: .\setup.ps1   (add -Mac for both runtimes)
+
+cd "Code PAI and App/PAI/PortableAi_Electron_Skeleton"
+npm install
+npm start           # run in dev
+npm run dist        # package: universal DMG/zip on Mac, zip on Windows
+```
+
+The Mac build is a **universal binary** (Apple Silicon + Intel). The Windows bundle ships the full CUDA runtime, including support for RTX 50-series (Blackwell) GPUs.
+
+### Putting it on a USB stick
+
+1. Format the drive as **exFAT** (works on both Mac and Windows)
+2. Copy the packaged app from `dist/` to the drive
+3. Launch it, and let the setup wizard download a model (one-time, needs internet)
+4. Done — after that, everything runs fully offline, entirely from the drive
 
 ### Daily Use
 
@@ -80,50 +95,14 @@ Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgr
 
 ## How It Works
 
-### Directory Structure
+1. `main.js` resolves the portable root (walks out of the `.app` bundle on macOS; uses the exe directory on Windows) and relocates **all** Electron data paths onto the drive — nothing is written to the host
+2. A free port is found in **11434–11440** (an already-running Ollama is reused instead)
+3. On macOS the embedded binary gets `chmod +x` and `xattr -rd com.apple.quarantine` (exFAT drops exec bits; Gatekeeper flags downloads)
+4. Ollama is spawned **from its own directory** (so CUDA/Metal libraries resolve) with `OLLAMA_MODELS` pointed at the drive
+5. `config/runtime.json` records port/PID/OS/arch; the default model is preloaded with `keep_alive=-1`
+6. On quit, Ollama is stopped and `runtime.json` removed
 
-```
-USB Drive (exFAT)
-+-- PortableAI.app/              # macOS app bundle
-|   +-- Contents/
-|       +-- Resources/
-|           +-- ollama-darwin    # embedded Ollama binary
-+-- PortableAI.exe               # Windows launcher
-+-- app_data/
-    +-- models/                  # Ollama model blobs and manifests
-    |   +-- blobs/
-    |   +-- manifests/
-    +-- data/
-    |   +-- sessions/            # saved chat history (JSON)
-    |   +-- ollama.log           # runtime log
-    +-- config/
-    |   +-- portable-settings.json  # internal config
-    |   +-- settings.json           # user preferences (theme, accent, etc.)
-    +-- resources/               # user-placed override binaries
-    +-- scripts/
-    |   +-- stop.command         # emergency kill script (Mac)
-    |   +-- stop.bat             # emergency kill script (Windows)
-    +-- windows/                 # unpacked Electron app (Windows only)
-        +-- PortableAI.exe       # actual Electron executable
-```
-
-> On Windows, the root `PortableAI.exe` is a lightweight launcher that sets up the working directory and hands off to `app_data/windows/PortableAI.exe`. Run the one at the root.
-
-### Launch Sequence
-
-1. **`main.js`** resolves the portable root. On macOS it walks up from the `.app` bundle; on Windows it uses the `.exe` directory.
-2. `app_data/` subdirectories are created if they don't exist.
-3. Old path layouts (`ollama_models/`, `appdata/`, `ollama-embedded.log`) are migrated automatically.
-4. A free port is found in the **11434-11440** range via TCP probe.
-5. The embedded Ollama binary is located (checking `app_data/resources/` for overrides, then the bundled binary, then fallbacks).
-6. On macOS, the binary gets `chmod 755` and `xattr -rd com.apple.quarantine` to bypass Gatekeeper.
-7. Ollama is spawned with `serve`, pointing `OLLAMA_MODELS` at `app_data/models/` and `OLLAMA_HOST` at `127.0.0.1:<port>`.
-8. The app waits ~3 seconds, confirms Ollama is responding via `/api/tags`, and writes a `runtime.json`.
-9. The first available model is preloaded into RAM (fire-and-forget).
-10. The Electron BrowserWindow loads `webui/index.html`.
-11. On quit, Ollama is killed and `runtime.json` is cleaned up.
-
-## Requirements
+## Requirements (to run the stick)
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
@@ -136,123 +115,56 @@ USB Drive (exFAT)
 
 ## Model Recommendations
 
-Any model from the [Ollama library](https://ollama.com/library) works. The setup wizard recommends one based on your detected RAM. Here are tested options:
-
 | RAM | Model | Size | Notes |
 |-----|-------|------|-------|
-| 8 GB | Gemma 3 4B, Phi-4 Mini (3.8B), Llama 3.2 3B | ~2-3 GB | Good for Q&A, writing, and light coding |
-| 8 GB | Mistral 7B, Qwen 3 8B | ~4-5 GB | Faster (Mistral) or smarter (Qwen) at this tier |
-| 16 GB | Phi-4 14B, Gemma 3 12B, DeepSeek-R1 14B | ~8-9 GB | Strong general-purpose and reasoning performance |
-| 16 GB | Qwen 2.5 Coder 14B | ~9 GB | Top local coding model at this size |
-| 32 GB+ | Llama 3.3 70B (Q4), Qwen 2.5 32B, Gemma 4 27B | ~20-40 GB | Near-cloud quality; slower on USB |
+| 8 GB | Llama 3.2 3B, Phi-3 Mini, Deepseek-R1 7B | ~2–2.5 GB | Good for basic Q&A and writing |
+| 16 GB | Llama 3.1 8B, Deepseek-R1 14B, Gemma 3 12B | ~4–5 GB | Strong general-purpose performance |
+| 32 GB+ | Llama 3.1 70B (q4), Qwen 2.5 32B | ~20–40 GB | Near-cloud quality, slower on USB |
 
-All sizes are approximate at Q4_K_M quantization. The Model Store filters recommendations by your detected RAM automatically.
+The Model Store filters recommendations by your detected RAM automatically.
 
-## Comparison
+## Embedded Runtime
 
-| Feature | Portable AI | OffGrid AI | Vision1 Mini | Docket Mini |
-|---------|-------------|------------|--------------|-------------|
-| Price | **Free** | $129-$469 | ~$40-50 | ~$30-60 |
-| macOS | Yes | No | No | Yes |
-| Windows | Yes | Yes | Yes | Yes |
-| Cross-platform (same drive) | Yes | No | No | No |
-| Choose your own model | Yes | Limited | Limited | Limited |
-| Hardware included | No (BYO drive) | Yes | Yes | Yes |
-
-## FAQ
-
-**Do I need internet?**
-
-Only once, to download an AI model through the built-in Model Store. After that, everything runs offline.
-
-**What models can I use?**
-
-Any model from the [Ollama library](https://ollama.com/library). The setup wizard recommends a model based on your available RAM. Popular choices include Gemma 3, Phi-4 Mini, Llama 3.2, Qwen 3, and DeepSeek-R1.
-
-**How fast is it?**
-
-On a MacBook with 16 GB RAM, expect 20-40 tokens/second with a mid-size model at Q4_K_M quantization. First launch takes 30-90 seconds to load the model into memory; after that, responses stream in quickly. USB 3.0+ makes a significant difference over USB 2.0.
-
-**Is this just Ollama with a wrapper?**
-
-Ollama handles model inference. Portable AI adds the full user experience on top: a chat interface with markdown and code highlighting, conversation history, a model store with RAM-based filtering, theme and accent customization, system instructions and personality settings, a memory system, per-model overrides, a setup wizard, cross-platform portability from a single USB drive, and an embedded Ollama lifecycle that starts and stops automatically. You never touch a terminal.
-
-**Can I use this without a USB drive?**
-
-Yes. The app runs from any folder on your local disk. A USB drive gives you portability between machines, but it works fine from your desktop or an external SSD.
-
-**How do I update the app?**
-
-Download the latest release and replace the app files on your drive. Your models, conversations, and settings live in `app_data/` and are preserved across updates.
-
-**Does it work with Apple Silicon?**
-
-Yes. The bundled Ollama binary runs natively on Apple Silicon (M1/M2/M3/M4) Macs. Performance is strong because Apple Silicon's unified memory means the full system RAM is available for model inference.
-
-**Can I run multiple models?**
-
-You can download as many models as your drive has space for. Switch between them mid-conversation using the model selector in the input area. Only one model is loaded into RAM at a time.
-
-## Verify Your Download
-
-SHA-256 checksums (files exactly as served by Gumroad):
-
-- `PortableAi-mac.zip`: 2ecbdd33f948d784c75d388258e1f4c05dbe605c9ccd4ee605046c693f313c66
-- `PortableAi-windows.zip`: 9f3870d8fa7bf70ff7f8b3f8a1d930e52646c8b612828c105e8926d50c00ce6b
-
-VirusTotal reports:
-
-- Windows launcher: https://www.virustotal.com/gui/file/4fc0b7dcc4683e5107ea8b964ddc8f5fa4ef71aeddba2a2ff2499d32c30f2223
-- Windows app: https://www.virustotal.com/gui/file/ea73ffdf0030a33d7cd93ce62a7367970d96e78d486390a1932d352f68792432
-- macOS app binary: https://www.virustotal.com/gui/file/86dde3af906c9c30c21a71844568da834df230c52f9d7b0987e8af947c134035
-- Embedded Ollama binaries (unmodified official releases, verifiable by hash): https://www.virustotal.com/gui/file/1a0ac3a49e96cc0f5d81dea0f48f80b1f3fe04c36113e74d52aea92f41b77009, https://www.virustotal.com/gui/file/45993128924d6b01d12c9078d8ac740d6401cf74ece498054917a45f38d447b3
-
-The app is not code-signed yet. If you prefer to sandbox it, it runs fine from a folder inside a VM.
-
-### Why the Windows launcher shows antivirus detections
-
-A handful of engines flag the root `PortableAI.exe`. Every one of those detections is a generic machine-learning or heuristic verdict, not a match for any known malware family. The actual labels are things like `ML.Attribute.HighConfidence` (Elastic), `Static AI - Suspicious PE` (MaxSecure), `malicious_confidence_70%` (CrowdStrike), `Wacatac.B!ml` (Cynet, a well-documented false-positive bucket), and `Trojan.Malware...susgen` (Fortinet, where "susgen" stands for "suspected generic").
-
-The reason is simple: `PortableAI.exe` is a small, unsigned launcher stub that was freshly built and is not yet widely distributed. Low prevalence plus the absence of a code-signing certificate is exactly the profile that machine-learning antivirus models score as risky, independent of what the program actually does. For comparison, the 211 MB main application and the embedded Ollama binaries (linked above) scan completely clean. Code signing is planned and will clear these flags.
+The bundled Ollama is the **unmodified official release** (currently v0.21.2). `setup.sh` / `setup.ps1` verify the sha256 of every download against pinned hashes before installing. No binaries are stored in this repository.
 
 ## Troubleshooting
 
 ### macOS: "PortableAI is damaged" or Gatekeeper block
 
-The app is not code-signed. Run this once:
+The app is ad-hoc signed, not notarized. Run this once:
 
 ```bash
 xattr -rd com.apple.quarantine /Volumes/YOUR_DRIVE/PortableAI.app
 ```
 
-Or right-click the app, then Open, then Open again on first launch.
+Or right-click → Open → Open on first launch.
+
+### GPU not used on Windows
+
+Make sure you're on a build that ships the full `lib/ollama` CUDA directory (older bundles stripped it). NVIDIA driver 555+ is required for RTX 50-series cards. The Ollama log (`app_data/data/ollama.log`) prints which GPU it detected at startup.
 
 ### Slow first load
 
-The first launch takes longer because Ollama loads the model into RAM from the USB drive. Subsequent prompts are much faster. USB 3.0+ makes a big difference. USB 2.0 can take 30-60 seconds for the initial model load.
+The first prompt loads the model from the stick into RAM. USB 3.0+ makes a big difference — on USB 2.0 the initial load can take 30–60 seconds.
 
 ### Port conflicts
 
-If you see "port in use" errors, another Ollama instance (or a previous crash) may be holding the port. The app tries ports 11434-11440 automatically. If all are taken, use the emergency stop script:
-
-- **Mac:** Double-click `app_data/scripts/stop.command`
-- **Windows:** Double-click `app_data/scripts/stop.bat`
+The app tries ports 11434–11440 automatically and reuses a live Ollama when it finds one. If everything is stuck, the emergency stop scripts live in `app_data/scripts/` (`stop.command` / `stop.bat`).
 
 ### Out of memory
 
-If the app crashes or responses are garbled, your model is too large for your available RAM. Switch to a smaller model in the Model Store.
+If the app crashes or responses are garbled, the model is too large for available RAM. Switch to a smaller model in the Model Store.
 
 ## Roadmap
 
 - [ ] Linux support
-- [ ] Auto-update mechanism
+- [ ] Prompt library on the welcome screen
+- [ ] Conversation search
 - [ ] RAG / document upload
-- [ ] Image generation
+- [ ] Local-WiFi mobile access (QR code to phone browser)
 - [ ] Voice input/output
-- [ ] Multi-user support
-- [ ] Plugin system
-
+- [ ] Code signing & notarization
 
 ## License
 
-Copyright (c) 2026 Sammuel Oluwaseyi Johnson. All Rights Reserved. See [LICENSE](LICENSE) for details.
+Copyright © 2026 Sammuel Oluwaseyi Johnson — All Rights Reserved. See [LICENSE](LICENSE) for details.

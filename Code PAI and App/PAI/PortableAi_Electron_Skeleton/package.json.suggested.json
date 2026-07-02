@@ -1,0 +1,57 @@
+{
+  "name": "portableai",
+  "version": "2025.09.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "ai.portable.desktop",
+    "productName": "PortableAi",
+    "files": [
+      "index.html",
+      "app.js",
+      "preload.js",
+      "assets/**"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "icon": "assets/icon.icns",
+      "artifactName": "${productName}-${version}-mac.${ext}"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "legalTrademarks": "PortableAi"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "PortableAi",
+      "artifactName": "${productName}-${version}-win.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

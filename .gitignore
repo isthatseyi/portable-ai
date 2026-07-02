@@ -1,5 +1,56 @@
-node_modules/
+# ============================================================
+# Portable AI — repo is SOURCE-ONLY.
+# Binaries, models, build outputs, and user data stay on the
+# drive but never enter git (GitHub rejects files >100MB).
+# Run setup.sh / setup.ps1 after cloning to fetch the Ollama
+# runtime into resources/.
+# ============================================================
+
+# --- OS / filesystem junk (exFAT stick travels between OSes) ---
 .DS_Store
+._*
+.Spotlight-V100/
+.fseventsd/
+.Trashes/
+.TemporaryItems/
+System Volume Information/
+$RECYCLE.BIN/
 Thumbs.db
+desktop.ini
+
+# --- Internal working files (never publish) ---
+.claude/
+HANDOFF-CODE-SESSION.md
+Build releases/
+Media/
+appdata.code-workspace
+current.png
+rename_screenshots.py
+
+# --- Runtime / user data (lives on the stick, not in git) ---
+app_data/
+appdata/
+ollama_models/
 *.log
-config/runtime.json
+**/config/runtime.json
+
+# --- Embedded Ollama binaries (fetched by setup.sh / setup.ps1) ---
+**/resources/ollama-darwin/
+**/resources/ollama-windows-amd64/
+
+# --- Build outputs / dependencies ---
+node_modules/
+dist/
+*.jsc
+*.exe
+*.dmg
+*.app/
+*.zip
+
+# --- Prebuilt apps & marketing copies already on the stick ---
+PortableAi (mac)/
+PortableAi/
+Code PAI and App/PortableAI.app/
+Code PAI and App/PortableAi*
+Code PAI and App/app_data/
+Code PAI and App/portable-ai-launch/

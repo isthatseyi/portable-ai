@@ -56,7 +56,20 @@ function getPortableRoot() {
       return path.resolve(path.dirname(process.execPath), '..', '..', '..');
     }
     // Generic Windows/Linux packaged fallback: folder next to the executable.
-    return path.resolve(path.dirname(process.execPath));
+    // Launcher-bypass guard (Windows): if the user runs the inner Electron exe
+    // (app_data\windows\PortableAI.exe) directly instead of the root launcher,
+    // PORTABLE_EXECUTABLE_DIR is unset and the exe dir sits INSIDE app_data —
+    // anchoring here would nest a second app_data inside the package. Walk back
+    // up to the real portable root (the folder that contains app_data).
+    const exeDir = path.resolve(path.dirname(process.execPath));
+    if (process.platform === 'win32') {
+      const parts = exeDir.split(path.sep);
+      const n = parts.length;
+      if (n >= 2 && parts[n - 2].toLowerCase() === 'app_data' && parts[n - 1].toLowerCase() === 'windows') {
+        return path.resolve(exeDir, '..', '..');
+      }
+    }
+    return exeDir;
   }
 
   // Dev: project root (lets you test locally with `npm start`).
@@ -418,7 +431,11 @@ async function stopEmbeddedOllama() {
 
     if (process.platform === 'win32') {
       // SIGTERM is a no-op on Windows; taskkill /T /F kills the whole process tree.
-      childProcess.exec(`taskkill /F /T /PID ${child.pid}`, () => { });
+      // execFile (no shell) + logged failure: a survived ollama.exe is exactly
+      // what causes "port in use" on the next launch, so leave a trace.
+      childProcess.execFile('taskkill', ['/F', '/T', '/PID', String(child.pid)], (err) => {
+        if (err) logLine(`[PortableAI] taskkill for pid ${child.pid} failed: ${err.message} — ollama.exe may keep the port busy until it exits.`);
+      });
       setTimeout(done, 5000); // failsafe
     } else {
       // Graceful first: SIGTERM. If it hasn't exited within 4s, escalate to SIGKILL.
@@ -563,6 +580,18 @@ async function ensureEmbeddedOllama(customModelsPath = null) {
       // Windows layout (v0.21+, unchanged in v0.31): lib/ollama/ holds ggml-*.dll + cuda_v12/cuda_v13/vulkan backends.
       // Prepend it (and binDir) to PATH so the CUDA/Vulkan DLLs load from the stick.
       const libDir = path.join(binDir, 'lib', 'ollama');
+      // Guard against a half-copied runtime: without lib/ollama the ggml/CUDA
+      // backends can't load and Ollama either dies or silently runs CPU-only —
+      // the exact symptom users report as "my GPU is ignored". Say so plainly.
+      if (!fs.existsSync(libDir)) {
+        logLine(`[PortableAI] ERROR: missing ${libDir} — the Ollama runtime bundle is incomplete (GPU/CPU backends cannot load).`);
+        dialog.showMessageBox({
+          type: 'error',
+          title: 'PortableAI — Incomplete Ollama runtime',
+          message: 'The embedded Ollama runtime is missing its lib\\ollama folder.',
+          detail: `Expected folder:\n${libDir}\n\nWithout it Ollama cannot load its GPU (or even CPU) backends. Restore the complete ollama-windows-amd64 folder — re-extract the release zip, or re-run setup.ps1 if you built from source.`,
+        }).catch(() => { });
+      }
       env.PATH = `${binDir};${libDir};${env.PATH || ''}`;
     }
 
@@ -767,11 +796,15 @@ ipcMain.handle('get-drive-space', async () => {
       // UNC roots (\\server\share) have no drive letter — bail to the null fallback.
       if (!/^[A-Za-z]:/.test(PORTABLE_ROOT)) return null;
       const drive = PORTABLE_ROOT.charAt(0).toUpperCase() + ':';
+      if (!/^[A-Za-z]:$/.test(drive)) return null; // belt-and-braces before interpolating into the script
       // Use PowerShell Get-CimInstance instead of deprecated wmic (removed in Win11).
-      // Where-Object avoids nested double quotes, which cmd→powershell mangles.
-      const ps = childProcess.execSync(
-        `powershell -NoProfile -Command "Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq '${drive}' } | Select-Object -Property Size,FreeSpace | ConvertTo-Json"`,
-        { encoding: 'utf8' }
+      // execFile (no cmd.exe in between) sidesteps quote-mangling entirely, and
+      // the 5s timeout keeps a hung CIM provider from wedging this IPC call.
+      const ps = childProcess.execFileSync(
+        'powershell.exe',
+        ['-NoProfile', '-Command',
+          `Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq '${drive}' } | Select-Object -Property Size,FreeSpace | ConvertTo-Json`],
+        { encoding: 'utf8', timeout: 5000, windowsHide: true }
       );
       const info = JSON.parse(ps.trim());
       const total = parseInt(info.Size) || 0;
@@ -1087,11 +1120,18 @@ ipcMain.handle('finish-cache-install', async () => {
         } else {
           // Cross-device moves of large AI models block indefinitely. Show byte progress!
           if (stat.size > 50 * 1024 * 1024) {
+            // Crash-safe move: stream into dst+'.tmp', verify the byte count,
+            // rename into place, and only then delete the source. A force-quit
+            // mid-copy leaves a harmless .tmp instead of a truncated blob that
+            // poisons every later run (blob names are content-addressed, so a
+            // partial file would never be overwritten by a retry).
+            const tmpPath = dstPath + '.tmp';
+            try { await fse.remove(tmpPath); } catch { } // stale leftover from a previous crash
             await new Promise((resolve, reject) => {
               let copied = 0;
               let lastPct = -1;
               const rs = fs.createReadStream(srcPath);
-              const ws = fs.createWriteStream(dstPath);
+              const ws = fs.createWriteStream(tmpPath);
 
               rs.on('data', (chunk) => {
                 copied += chunk.length;
@@ -1108,7 +1148,13 @@ ipcMain.handle('finish-cache-install', async () => {
               ws.on('finish', resolve);
               rs.pipe(ws);
             });
-            // Cleanup the original file like a move does
+            const written = (await fse.stat(tmpPath)).size;
+            if (written !== stat.size) {
+              try { await fse.remove(tmpPath); } catch { }
+              throw new Error(`short copy of ${name}: ${written}/${stat.size} bytes`);
+            }
+            await fse.move(tmpPath, dstPath, { overwrite: true }); // same-volume rename — atomic enough for exFAT
+            // Only now is it safe to drop the original.
             await fse.remove(srcPath);
           } else {
             if (win) win.webContents.send('cache-move-progress', { label, index: i + 1, total: entries.length });
@@ -1145,19 +1191,54 @@ ipcMain.handle('restart-ollama', async () => {
 });
 
 // ---------- Check for VC++ Runtime on Windows ----------
+// Detection must be generous: the legacy VS14 registry key alone misses many
+// modern runtime installs, which made the app nag those users on EVERY launch.
+// Any one of these signals counts as installed:
+//   1. msvcp140.dll + vcruntime140.dll present in System32 (ground truth), or
+//   2. the VS14 Runtimes registry key, in either registry view, or
+//   3. an Uninstall entry whose display name mentions the VC++ redistributable.
 async function checkVCRuntime() {
   if (process.platform !== 'win32') return;
+
   try {
-    // Check for the VC++ 2015-2022 Redistributable via registry
-    const regQuery = childProcess.execSync(
-      'reg query "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64" /v Installed 2>nul',
-      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    if (regQuery.includes('0x1')) {
-      logLine('[PortableAI] VC++ Runtime detected.');
+    const sys32 = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32');
+    if (fs.existsSync(path.join(sys32, 'msvcp140.dll')) &&
+        fs.existsSync(path.join(sys32, 'vcruntime140.dll'))) {
+      logLine('[PortableAI] VC++ Runtime detected (System32 DLLs).');
       return;
     }
-  } catch { /* registry key not found — runtime likely missing */ }
+  } catch { }
+
+  // reg.exe via execFile (no shell), with a timeout so a wedged registry
+  // provider can't hang startup. Resolves '' on any failure.
+  const regQuery = (args, timeout = 5000) => new Promise((resolve) => {
+    childProcess.execFile('reg', args, { encoding: 'utf8', timeout, windowsHide: true },
+      (err, stdout) => resolve(err ? '' : String(stdout || '')));
+  });
+
+  const runtimeKeys = [
+    'HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64',
+    'HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64',
+  ];
+  for (const key of runtimeKeys) {
+    if ((await regQuery(['query', key, '/v', 'Installed'])).includes('0x1')) {
+      logLine('[PortableAI] VC++ Runtime detected (registry).');
+      return;
+    }
+  }
+
+  // Last resort: scan Uninstall display names (covers oddball installers).
+  const uninstallKeys = [
+    'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+    'HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+  ];
+  for (const key of uninstallKeys) {
+    const out = await regQuery(['query', key, '/s', '/f', 'Visual C++', '/d'], 10000);
+    if (/Visual C\+\+.*Redistributable.*x64/i.test(out)) {
+      logLine('[PortableAI] VC++ Runtime detected (Uninstall entry).');
+      return;
+    }
+  }
 
   logLine('[PortableAI] VC++ Runtime NOT detected — prompting user.');
 
@@ -1186,12 +1267,14 @@ async function checkVCRuntime() {
 
   if (vcRedist && result.response === 0) {
     logLine(`[PortableAI] Launching VC++ installer: ${vcRedist}`);
-    try {
-      childProcess.execSync(`"${vcRedist}" /install /passive /norestart`, { stdio: 'ignore' });
-      logLine('[PortableAI] VC++ Runtime installed successfully.');
-    } catch (e) {
-      logLine(`[PortableAI] VC++ installer failed: ${e.message}`);
-    }
+    // execFile: no shell, so spaces in the stick path can't split the command.
+    await new Promise((resolve) => {
+      childProcess.execFile(vcRedist, ['/install', '/passive', '/norestart'], (err) => {
+        if (err) logLine(`[PortableAI] VC++ installer failed: ${err.message}`);
+        else logLine('[PortableAI] VC++ Runtime installed successfully.');
+        resolve();
+      });
+    });
   }
 }
 

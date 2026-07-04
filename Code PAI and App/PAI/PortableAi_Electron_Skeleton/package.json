@@ -1,0 +1,90 @@
+{
+  "name": "portableai",
+  "version": "1.1.0",
+  "description": "PortableAI — portable Electron wrapper with embedded Ollama",
+  "license": "AGPL-3.0-only",
+  "author": "Seyi",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:all": "electron-builder -mwl"
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.1"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.seyi.portableai",
+    "productName": "PortableAI",
+    "asar": true,
+    "compression": "store",
+    "afterPack": "scripts/afterpack-codesign.js",
+    "files": [
+      "main.js",
+      "preload.js",
+      "*.jsc",
+      "assets/**",
+      "config/settings.json",
+      "webui/index.html",
+      "!webui/app.js",
+      "!webui/restored_functions.js"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "artifactName": "PortableAI-${version}-mac-universal.${ext}",
+      "x64ArchFiles": "Contents/Resources/ollama-darwin/**",
+      "extraResources": [
+        {
+          "from": "resources/ollama-darwin",
+          "to": "ollama-darwin"
+        }
+      ]
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "PortableAI-${version}-win.${ext}",
+      "extraResources": [
+        {
+          "from": "resources/ollama-windows-amd64",
+          "to": "ollama-windows-amd64"
+        }
+      ]
+    },
+    "publish": null
+  }
+}

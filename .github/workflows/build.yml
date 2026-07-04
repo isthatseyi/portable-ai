@@ -1,0 +1,173 @@
+name: Build
+
+# Builds the packaged app on real Windows and macOS runners.
+# The Windows job doubles as the project's first automated real-Windows test
+# (the developer works on a Mac).
+#
+# Code signing (Azure Trusted Signing / "Artifact Signing", account
+# "samjohnsonsigning" in rg-artifact-signing) is wired in once the identity
+# validation + certificate profile exist — see the commented step below.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "screenshots/**"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "screenshots/**"
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_DIR: Code PAI and App/PAI/PortableAi_Electron_Skeleton
+
+jobs:
+  windows:
+    name: Windows app (x64)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      # setup.ps1 pins the Ollama version + sha256, so the script's hash is a
+      # correct cache key for the ~2 GB runtime it downloads.
+      - name: Cache embedded Ollama runtime
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.APP_DIR }}/resources/ollama-windows-amd64
+          key: ollama-win-${{ hashFiles('setup.ps1') }}
+
+      - name: Fetch embedded Ollama runtime (sha256-verified)
+        shell: pwsh
+        run: |
+          if (Test-Path "$env:APP_DIR/resources/ollama-windows-amd64/ollama.exe") {
+            Write-Host "Runtime restored from cache."
+          } else {
+            .\setup.ps1
+          }
+
+      - name: Smoke-run embedded ollama.exe
+        shell: pwsh
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          & "resources/ollama-windows-amd64/ollama.exe" --version
+
+      - name: npm ci
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci
+
+      - name: Package (electron-builder, win x64 zip)
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run dist
+
+      # --- Azure Trusted Signing (enable once the cert profile exists) ---
+      # Signing must happen on the unpacked exes BEFORE electron-builder zips
+      # them, so the real integration point is electron-builder's win.sign
+      # hook (or sign + re-zip here). Placeholder until then:
+      # - uses: azure/trusted-signing-action@v5
+      #   with:
+      #     azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      #     azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      #     endpoint: ${{ vars.ATS_ENDPOINT }}          # e.g. https://eus.codesigning.azure.net
+      #     trusted-signing-account-name: samjohnsonsigning
+      #     certificate-profile-name: ${{ vars.ATS_CERT_PROFILE }}
+      #     files-folder: <unpacked exe location>
+      #     files-folder-filter: exe
+
+      - name: Upload Windows zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: PortableAI-win-x64
+          path: ${{ env.APP_DIR }}/dist/PortableAI-*-win.zip
+          if-no-files-found: error
+
+  mac:
+    name: macOS app (universal)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      - name: Cache embedded Ollama runtime
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.APP_DIR }}/resources/ollama-darwin
+          key: ollama-mac-${{ hashFiles('setup.sh') }}
+
+      - name: Fetch embedded Ollama runtime (sha256-verified)
+        run: |
+          if [ -x "$APP_DIR/resources/ollama-darwin/ollama" ]; then
+            echo "Runtime restored from cache."
+          else
+            ./setup.sh
+          fi
+
+      - name: Smoke-run embedded ollama
+        working-directory: ${{ env.APP_DIR }}
+        run: ./resources/ollama-darwin/ollama --version
+
+      - name: npm ci
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci
+
+      - name: Package (electron-builder, mac universal dmg+zip)
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run dist
+
+      - name: Verify universal binary
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          APP=$(find dist -maxdepth 3 -name "PortableAI.app" | head -1)
+          lipo -info "$APP/Contents/MacOS/PortableAI"
+
+      - name: Upload mac zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: PortableAI-mac-universal
+          path: ${{ env.APP_DIR }}/dist/PortableAI-*-mac-universal.zip
+          if-no-files-found: error
+
+  launcher:
+    name: Windows root launcher (Go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: Code PAI and App/PAI/PortableAi_Electron_Skeleton/scripts/launcher/go.mod
+
+      # The committed .syso files embed the icon + version info automatically.
+      - name: Build launcher exe
+        working-directory: ${{ env.APP_DIR }}/scripts/launcher
+        env:
+          GOOS: windows
+          GOARCH: amd64
+        run: go build -ldflags="-H=windowsgui" -o PortableAI.exe
+
+      - name: Upload launcher exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: PortableAI-launcher
+          path: ${{ env.APP_DIR }}/scripts/launcher/PortableAI.exe
+          if-no-files-found: error

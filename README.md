@@ -8,7 +8,7 @@ A cross-platform portable LLM app. Download a model once, then run anywhere with
 
 ## What This Is
 
-An Electron app that bundles [Ollama](https://ollama.com) on a single exFAT-formatted USB drive. Plug it into any Mac or Windows machine, double-click, and chat with a local LLM. No installation on the host computer. No cloud. No accounts.
+An Electron app that bundles [Ollama](https://ollama.com) on a single exFAT-formatted USB drive. Plug it into any Mac or Windows machine, double-click, and chat with a local LLM. The app and your data live on the drive, not the host. No cloud. No accounts.
 
 The same physical drive works on both operating systems.
 

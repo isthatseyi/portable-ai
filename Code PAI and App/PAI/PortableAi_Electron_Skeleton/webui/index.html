@@ -3374,6 +3374,133 @@
       margin-left: 4px;
     }
 
+    /* Vision chat: attach button + pending-attachment strip + drop overlay */
+    #attachBtn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+      transition: .15s;
+      margin-right: 4px;
+      flex: none;
+    }
+
+    #attachBtn:hover {
+      color: var(--brand);
+      border-color: var(--brand);
+    }
+
+    #attachStrip {
+      display: flex;
+      gap: 8px;
+      max-width: 900px;
+      margin: 0 auto 8px;
+      padding: 0 4px;
+    }
+
+    .attach-chip {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 30px 6px 6px;
+    }
+
+    .attach-chip img {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .attach-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .attach-x {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .attach-x:hover {
+      color: var(--danger);
+      background: var(--panel2);
+    }
+
+    #dropOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 8000;
+      background: rgba(0, 0, 0, .5);
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+
+    #dropOverlay .drop-card {
+      border: 2px dashed var(--brand);
+      border-radius: 16px;
+      padding: 32px 48px;
+      color: var(--text);
+      background: var(--panel);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* Image thumbs inside user bubbles */
+    .msg-thumbs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .msg-thumbs img {
+      max-width: 160px;
+      max-height: 128px;
+      border-radius: 10px;
+      cursor: zoom-in;
+      display: block;
+    }
+
+    /* Lightbox */
+    #imgLightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9500;
+      background: rgba(0, 0, 0, .8);
+      display: grid;
+      place-items: center;
+      cursor: zoom-out;
+    }
+
+    #imgLightbox img {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 8px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, .5);
+    }
+
     .ms-open-btn:hover {
       color: var(--text);
       background: var(--chip);
@@ -3737,7 +3864,13 @@
       <button id="jump" title="Jump to bottom"><svg class="ui-icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
 
       <div id="composer">
+        <!-- Pending image attachment (vision chat) -->
+        <div id="attachStrip" style="display:none"></div>
         <div id="inputRow">
+          <button id="attachBtn" title="Attach an image">
+            <svg class="ui-icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="attachInput" accept="image/*" style="display:none">
           <textarea id="prompt"
             placeholder="Message PortableAi… (Enter to send, Shift+Enter for a new line)"></textarea>
 
@@ -4609,7 +4742,8 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
    because streaming code calls jsave(KEYS.convs, ...) as messages arrive. */
 const IDBStore = {
   DB_NAME: 'portable_ai',
-  DB_VERSION: 1,
+  // v2 adds the additive `images` store (vision-chat attachment blobs).
+  DB_VERSION: 2,
   _db: null,
   _saveTimer: null,
   _pending: null,
@@ -4629,6 +4763,12 @@ const IDBStore = {
         }
         if (!db.objectStoreNames.contains('kv')) {
           db.createObjectStore('kv', { keyPath: 'k' });
+        }
+        // v2: processed attachment JPEGs, one immutable blob per id. Written
+        // once at attach time — kept OUT of the conversations store so the
+        // debounced clear+re-put autosave never rewrites megabytes on exFAT.
+        if (!db.objectStoreNames.contains('images')) {
+          db.createObjectStore('images', { keyPath: 'id' });
         }
       };
       req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
@@ -4699,6 +4839,65 @@ const IDBStore = {
     if (os) { try { os.clear(); } catch { } }
     const kv = await this._tx('kv', 'readwrite');
     if (kv) { try { kv.clear(); } catch { } }
+    const im = await this._tx('images', 'readwrite');
+    if (im) { try { im.clear(); } catch { } }
+  },
+
+  /* ----- vision-chat image blobs (v2 store) ----- */
+  async putImage(id, blob) {
+    const os = await this._tx('images', 'readwrite');
+    if (!os) return false;
+    return new Promise((resolve) => {
+      try {
+        const r = os.put({ id, blob });
+        r.onsuccess = () => resolve(true);
+        r.onerror = () => resolve(false);
+      } catch { resolve(false); }
+    });
+  },
+
+  async getImage(id) {
+    const os = await this._tx('images', 'readonly');
+    if (!os) return null;
+    return new Promise((resolve) => {
+      const r = os.get(id);
+      r.onsuccess = () => resolve(r.result ? r.result.blob : null);
+      r.onerror = () => resolve(null);
+    });
+  },
+
+  async deleteImages(ids) {
+    if (!ids || !ids.length) return;
+    const os = await this._tx('images', 'readwrite');
+    if (!os) return;
+    for (const id of ids) { try { os.delete(id); } catch { } }
+  },
+
+  async listImageIds() {
+    const os = await this._tx('images', 'readonly');
+    if (!os) return [];
+    return new Promise((resolve) => {
+      const r = os.getAllKeys();
+      r.onsuccess = () => resolve(r.result || []);
+      r.onerror = () => resolve([]);
+    });
+  },
+
+  // Drop blobs no message references anymore (deleted chats, failed sends).
+  // Runs once at startup, after hydrate.
+  async gcImages(convs) {
+    try {
+      const referenced = new Set();
+      for (const c of (convs || []))
+        for (const m of (c.messages || []))
+          for (const a of (m.attachments || [])) referenced.add(a.id);
+      const ids = await this.listImageIds();
+      const orphans = ids.filter(id => !referenced.has(id));
+      if (orphans.length) {
+        await this.deleteImages(orphans);
+        console.log(`[PortableAI] Image GC: removed ${orphans.length} orphan blob(s).`);
+      }
+    } catch { }
   },
 
   // Reconcile IndexedDB with the in-memory state loaded from localStorage.
@@ -4927,6 +5126,165 @@ function mathRender(root) {
 /* ---------- Memory System ---------- */
 // Note: MemoryStore object is defined in init() function (see line ~1895)
 // Old memory functions removed - consolidated to MemoryStore
+
+/* ---------- Vision chat: image attachments ---------- */
+// Attachments are processed once at attach time (downscale -> JPEG) and the
+// blob lands in the IDB `images` store keyed by id. Messages persist only an
+// `attachments` array of {id, thumb, w, h, mime, bytes} — small enough for
+// the debounced conversation autosave; base64 for /api/chat is produced from
+// the blob at request time only. NOTE: the field is deliberately NOT called
+// `images` — the history mapper forwards `m.images` to the API verbatim.
+const MAX_ATTACH = 1;                       // per message, first release
+const MAX_IMAGE_FILE = 50 * 1024 * 1024;    // reject bigger source files
+const IMG_LONG_EDGE = 1568;                 // model-friendly max dimension
+const THUMB_EDGE = 128;                     // bubble thumb (data-URI)
+let pendingAttachments = [];                // staged for the next send
+
+async function processImageFile(file) {
+  if (!file) return null;
+  if (/heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name || '')) {
+    showToast("HEIC photos aren't supported — export as JPEG or PNG first.", 'warning');
+    return null;
+  }
+  if (!/^image\//i.test(file.type)) {
+    showToast("That file isn't an image.", 'warning');
+    return null;
+  }
+  if (file.size > MAX_IMAGE_FILE) {
+    showToast('Image is larger than 50 MB — please use a smaller one.', 'warning');
+    return null;
+  }
+  let bmp;
+  try { bmp = await createImageBitmap(file); }
+  catch {
+    showToast("Couldn't read that image — the format may be unsupported.", 'error');
+    return null;
+  }
+  const scale = Math.min(1, IMG_LONG_EDGE / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale));
+  const h = Math.max(1, Math.round(bmp.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';                    // white under transparent PNGs
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(bmp, 0, 0, w, h);
+  if (bmp.close) bmp.close();
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+  if (!blob) {
+    showToast("Couldn't process the image.", 'error');
+    return null;
+  }
+  const ts = Math.min(1, THUMB_EDGE / Math.max(w, h));
+  const tc = document.createElement('canvas');
+  tc.width = Math.max(1, Math.round(w * ts));
+  tc.height = Math.max(1, Math.round(h * ts));
+  tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
+  const thumb = tc.toDataURL('image/jpeg', 0.7);
+  return { id: uid(), thumb, w, h, mime: 'image/jpeg', bytes: blob.size, blob };
+}
+
+// Catalog lookup: true/false when the family is known, null when it isn't.
+function modelIsMultimodal(name) {
+  if (!name) return null;
+  const lower = name.toLowerCase();
+  const family = lower.split(':')[0];
+  const catalog = (typeof MODEL_CATALOG !== 'undefined' && Array.isArray(MODEL_CATALOG)) ? MODEL_CATALOG : [];
+  const hit = catalog.find(m => {
+    const id = (m.id || '').toLowerCase();
+    return id === lower || id.split(':')[0] === family;
+  });
+  return hit ? !!hit.multimodal : null;
+}
+
+function activeModelName() {
+  const conv = conversations.find(c => c.id === activeId);
+  return ((conv && conv.model) || settings.model || '').trim();
+}
+
+// Gate for attaching/sending images with the current model.
+function visionGate() {
+  const model = activeModelName();
+  const mm = modelIsMultimodal(model);
+  if (mm === false) {
+    return { ok: false, msg: `${model || 'This model'} can't view images — try a vision model like Gemma 4 (Model Store).` };
+  }
+  if (mm === null && !settings.visionUnknownWarned) {
+    settings.visionUnknownWarned = true;
+    jsave(KEYS.settings, settings);
+    showToast(`Not sure whether ${model || 'this model'} supports images — trying anyway. If it errors, switch to Gemma 4.`, 'info');
+  }
+  return { ok: true };
+}
+
+async function addAttachment(file) {
+  if (pendingAttachments.length >= MAX_ATTACH) {
+    showToast('One image per message for now — remove the current one first.', 'info');
+    return;
+  }
+  const gate = visionGate();
+  if (!gate.ok) { showToast(gate.msg, 'warning'); return; }
+  const att = await processImageFile(file);
+  if (!att) return;
+  pendingAttachments.push(att);
+  renderAttachStrip();
+}
+
+function renderAttachStrip() {
+  const strip = document.getElementById('attachStrip');
+  if (!strip) return;
+  if (!pendingAttachments.length) {
+    strip.style.display = 'none';
+    strip.innerHTML = '';
+    return;
+  }
+  strip.style.display = 'flex';
+  strip.innerHTML = pendingAttachments.map((a, i) => `
+    <div class="attach-chip">
+      <img src="${a.thumb}" alt="attachment preview">
+      <span class="attach-meta">${a.w}×${a.h} · ${Math.max(1, Math.round(a.bytes / 1024))} KB</span>
+      <button class="attach-x" onclick="removeAttachment(${i})" title="Remove">×</button>
+    </div>`).join('');
+}
+
+function removeAttachment(i) {
+  pendingAttachments.splice(i, 1);
+  renderAttachStrip();
+}
+window.removeAttachment = removeAttachment;
+
+function showDropOverlay(show) {
+  let ov = document.getElementById('dropOverlay');
+  if (show) {
+    if (ov) return;
+    ov = document.createElement('div');
+    ov.id = 'dropOverlay';
+    ov.innerHTML = '<div class="drop-card">Drop an image to attach it</div>';
+    document.body.appendChild(ov);
+  } else if (ov) {
+    ov.remove();
+  }
+}
+
+// Fetch a message's image blobs and return base64 payloads for /api/chat.
+// Returns null if any blob is missing (message then goes out text-only).
+async function hydrateImagesBase64(attachments) {
+  if (!attachments || !attachments.length) return null;
+  const out = [];
+  for (const a of attachments) {
+    const blob = await IDBStore.getImage(a.id);
+    if (!blob) return null;
+    const b64 = await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result).split(',')[1] || '');
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    }).catch(() => null);
+    if (!b64) return null;
+    out.push(b64);
+  }
+  return out;
+}
 
 /* ---------- Prompt library (welcome-screen tiles) ---------- */
 // Small built-in starter library; clicking a tile drops a random prompt from
@@ -5446,6 +5804,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeMenus();
     document.getElementById('shortcutsPanel')?.remove();
+    closeLightbox();
   }
 });
 
@@ -5546,16 +5905,36 @@ async function sendPrompt() {
   // Get model from conversation or global settings
   const model = (conv.model || settings.model || '').trim();
   const text = ui.prompt.value.trim();
-  if (!text) return;
+  const hasAttachments = pendingAttachments.length > 0;
+  if (!text && !hasAttachments) return;   // image-only sends are allowed
   if (!model) {
     alert('Please select a model first');
     return;
   }
+  // Hard gate: never send an image to a model the catalog says is text-only
+  if (hasAttachments) {
+    const gate = visionGate();
+    if (!gate.ok) { showToast(gate.msg, 'warning'); return; }
+  }
   conv.model = model;
   const user = { role: 'user', content: text, ts: ts() };
+  if (hasAttachments) {
+    // Persist the processed blobs FIRST; the message only carries metadata.
+    const staged = pendingAttachments.splice(0, pendingAttachments.length);
+    renderAttachStrip();
+    for (const a of staged) {
+      const ok = await IDBStore.putImage(a.id, a.blob);
+      if (!ok) {
+        showToast("Couldn't store the image — sending without it.", 'error');
+        continue;
+      }
+      user.attachments = user.attachments || [];
+      user.attachments.push({ id: a.id, thumb: a.thumb, w: a.w, h: a.h, mime: a.mime, bytes: a.bytes });
+    }
+  }
   conv.messages.push(user);
   conv.updatedAt = Date.now();
-  if (!conv.title || conv.title === 'New chat') conv.title = text.slice(0, 48);
+  if (!conv.title || conv.title === 'New chat') conv.title = (text || 'Image').slice(0, 48);
   jsave(KEYS.convs, conversations);
   renderSidebar();
   renderMessages(true);
@@ -5573,8 +5952,31 @@ function regenerateLast() {
 }
 function stopStream() { if (streaming) { streaming.abort(); streaming = null; streamingNode = null; ui.stop.style.display = 'none'; ui.send.style.display = 'grid'; hideLeftLoading(); } }
 
+/* ---------- Image lightbox (vision chat) ---------- */
+let _lightboxUrl = null;
+async function openLightbox(imgId, fallbackSrc) {
+  closeLightbox();
+  let src = fallbackSrc;
+  const blob = imgId ? await IDBStore.getImage(imgId) : null;
+  if (blob) {
+    _lightboxUrl = URL.createObjectURL(blob);
+    src = _lightboxUrl;
+  }
+  const box = document.createElement('div');
+  box.id = 'imgLightbox';
+  box.innerHTML = `<img src="${src}" alt="attached image">`;
+  box.addEventListener('click', closeLightbox);
+  document.body.appendChild(box);
+}
+function closeLightbox() {
+  document.getElementById('imgLightbox')?.remove();
+  if (_lightboxUrl) { URL.revokeObjectURL(_lightboxUrl); _lightboxUrl = null; }
+}
+
 /* ---------- Tools and code copy ---------- */
 document.addEventListener('click', e => {
+  const thumbImg = e.target.closest('.msg-thumbs img');
+  if (thumbImg) { openLightbox(thumbImg.dataset.imgId, thumbImg.src); return; }
   const cp = e.target.closest('.copy'); if (cp) {
     const idx = +cp.dataset.idx; const conv = conversations.find(c => c.id === activeId); const m = conv?.messages[idx];
     if (m) { navigator.clipboard.writeText(m.content || ''); showToast('Copied to clipboard', 'success'); const svg = cp.querySelector('svg'); const prev = svg.innerHTML; svg.innerHTML = '<path d="M9 16.2 5.8 13l-1.4 1.4L9 19 21 7l-1.4-1.4z" fill="currentColor"/>'; setTimeout(() => svg.innerHTML = prev, 900); }
@@ -5640,7 +6042,10 @@ function exportActive() {
     .map(m => {
       // Content already holds markdown (code fences preserved verbatim).
       const label = roleLabel[m.role] || m.role;
-      let block = `## ${label}\n\n${(m.content || '').trim()}\n`;
+      const attachNote = (m.attachments && m.attachments.length)
+        ? `*[${m.attachments.length} attached image${m.attachments.length > 1 ? 's' : ''} — not included in this export]*\n\n`
+        : '';
+      let block = `## ${label}\n\n${attachNote}${(m.content || '').trim()}\n`;
       if (m.role === 'assistant' && m.meta && m.meta.eval_count) {
         const tps = m.meta.tps ? ` • ${m.meta.tps.toFixed(1)} t/s` : '';
         block += `\n<sub>${m.meta.eval_count} tokens${tps}</sub>\n`;
@@ -5816,6 +6221,13 @@ function deleteChat(e, id) {
     const title = (conv.title || 'this chat').slice(0, 40);
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
   }
+  // Drop this chat's image blobs from the IDB store (fire-and-forget)
+  if (conv) {
+    const imgIds = [];
+    for (const m of (conv.messages || []))
+      for (const a of (m.attachments || [])) imgIds.push(a.id);
+    if (imgIds.length) IDBStore.deleteImages(imgIds);
+  }
   conversations = conversations.filter(c => c.id !== id);
   if (activeId === id) activeId = conversations[0] ? conversations[0].id : null;
   jsave(KEYS.convs, conversations); jsave(KEYS.active, activeId);
@@ -5885,11 +6297,19 @@ function renderMessages(scroll) {
     // only the first shows an avatar, the rest tuck in closer.
     const grouped = i > 0 && conv.messages[i - 1].role === m.role;
 
+    // Attached-image thumbs (vision chat) — rendered from the tiny data-URI
+    // thumbs stored on the message, zero IDB hits; click opens the full blob.
+    const thumbsHtml = (m.attachments && m.attachments.length)
+      ? `<div class="msg-thumbs">${m.attachments.map(a =>
+        `<img src="${a.thumb}" data-img-id="${a.id}" alt="attached image">`).join('')}</div>`
+      : '';
+
     if (m.role === 'user') {
       return `
         <div class="msg user${grouped ? ' grouped' : ''}" data-idx="${i}">
           <div class="row">
             <div class="bubble">
+              ${thumbsHtml}
               <div class="content">${md(m.content)}</div>
             </div>
             <div class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -6105,9 +6525,20 @@ async function streamReplyFrom(conv, uIdx) {
   if (sysContent) messages.push({ role: 'system', content: sysContent });
 
   // History
-  // We take messages up to userIdx
+  // We take messages up to userIdx. Image attachments hydrate to base64 from
+  // the IDB blob store at request time only — the persisted message carries
+  // just {id, thumb, ...} metadata. A missing blob degrades to text-only.
   const history = conv.messages.slice(0, uIdx + 1);
-  messages.push(...history.map(m => ({ role: m.role, content: m.content, images: m.images })));
+  for (const m of history) {
+    const entry = { role: m.role, content: m.content };
+    if (m.images) entry.images = m.images; // legacy passthrough
+    if (m.attachments && m.attachments.length) {
+      const imgs = await hydrateImagesBase64(m.attachments);
+      if (imgs) entry.images = imgs;
+      else console.warn('[PortableAI] Attachment blob(s) missing for a message — sent text-only.');
+    }
+    messages.push(entry);
+  }
 
   const body = { model, messages: messages, stream: true, options: { temperature: settings.temperature, num_ctx: settings.contextLength || 4096 } };
   // Show loading before request
@@ -8671,6 +9102,9 @@ async function init() {
     }
   } catch (e) { console.warn('IDB hydrate failed', e); }
 
+  // Fire-and-forget: sweep image blobs orphaned by deleted chats/failed sends.
+  IDBStore.gcImages(conversations);
+
   ui = {
     appGrid: $('#appGrid'),
     sidebar: $('#sidebar'), sbToggle: $('#sbToggle'),
@@ -9091,6 +9525,45 @@ async function init() {
   if (ui.stop) ui.stop.addEventListener('click', stopStream);
   // ui.regen removed - regenerate now in message hover menu
   if (ui.prompt) ui.prompt.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); } });
+
+  // --- Vision chat ingest: attach button, paste, window drag-drop ---
+  const attachBtn = document.getElementById('attachBtn');
+  const attachInput = document.getElementById('attachInput');
+  if (attachBtn && attachInput) {
+    attachBtn.addEventListener('click', () => {
+      const gate = visionGate();
+      if (!gate.ok) { showToast(gate.msg, 'warning'); return; }
+      attachInput.click();
+    });
+    attachInput.addEventListener('change', async () => {
+      const f = attachInput.files && attachInput.files[0];
+      attachInput.value = '';
+      if (f) await addAttachment(f);
+    });
+  }
+  if (ui.prompt) ui.prompt.addEventListener('paste', async (e) => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (item) { e.preventDefault(); await addAttachment(item.getAsFile()); }
+  });
+  let dragDepth = 0;
+  window.addEventListener('dragenter', (e) => {
+    if ([...(e.dataTransfer?.types || [])].includes('Files')) {
+      dragDepth++;
+      showDropOverlay(true);
+    }
+  });
+  window.addEventListener('dragleave', () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) showDropOverlay(false);
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    showDropOverlay(false);
+    const f = e.dataTransfer?.files?.[0];
+    if (f) await addAttachment(f);
+  });
 
   // Prompt 4: Memory Store
   MemoryStore = {

@@ -604,7 +604,26 @@ async function ensureEmbeddedOllama(customModelsPath = null) {
       windowsHide: true,
     });
 
-    const append = (buf) => { try { fs.appendFileSync(LOG_FILE, buf.toString()); } catch { } };
+    // Buffered ASYNC log sink. The old appendFileSync-per-chunk wedged the
+    // main process during model pulls: Ollama streams progress to stderr many
+    // times a second while the same stick is absorbing the blob writes, so
+    // every sync append blocked the event loop ("application not responding").
+    let logChunks = '';
+    let logFlush = null;
+    const flushOllamaLog = () => {
+      logFlush = null;
+      if (!logChunks) return;
+      const out = logChunks;
+      logChunks = '';
+      fs.appendFile(LOG_FILE, out, () => { });
+    };
+    const append = (buf) => {
+      logChunks += buf.toString();
+      // Progress spam guard: a multi-GB pull emits megabytes of \r-updates.
+      // Keep only the tail if a flush window accumulates too much.
+      if (logChunks.length > 256 * 1024) logChunks = logChunks.slice(-64 * 1024);
+      if (!logFlush) logFlush = setTimeout(flushOllamaLog, 1000);
+    };
     if (ollamaChild.stdout) ollamaChild.stdout.on('data', append);
     if (ollamaChild.stderr) ollamaChild.stderr.on('data', append);
 

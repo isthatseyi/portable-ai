@@ -1238,7 +1238,8 @@
       position: relative;
     }
 
-    .thinking:not([open])::before {
+    /* Shimmer only while the model is actively thinking */
+    .thinking.streaming:not([open])::before {
       content: '';
       position: absolute;
       inset: 0;
@@ -1314,6 +1315,19 @@
       background: rgba(128, 128, 128, 0.12);
       border-radius: 999px;
       padding: 1px 8px;
+    }
+
+    /* One-line rolling summary of the live thought stream */
+    .think-live {
+      flex: 1;
+      min-width: 0;
+      margin-left: 10px;
+      font-weight: 400;
+      font-style: italic;
+      opacity: 0.75;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .think {
@@ -2806,7 +2820,10 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5);
+      /* Match the settings modal: strong dim + blur so the chat underneath
+         can't read as "overlapping" UI */
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
       z-index: 3000;
       align-items: center;
       justify-content: center;
@@ -3000,6 +3017,7 @@
       padding: 0 20px;
       border-bottom: 1px solid var(--border);
       overflow-x: auto;
+      flex: none; /* the modal is a flex column — don't let it crush this row */
     }
 
     .ms-tab {
@@ -3550,7 +3568,7 @@
           <div class="setup-features">
             <div class="setup-feature">
               <h3><svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 100% Private</h3>
-              <p>Everything stays on this device. No data leaves your machine.</p>
+              <p>Chats, settings, and models live on this drive. No accounts, no telemetry, no cloud.</p>
             </div>
             <div class="setup-feature">
               <h3 id="setupOfflineTitle"><svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg> Runs offline</h3>
@@ -3558,11 +3576,12 @@
             </div>
             <div class="setup-feature">
               <h3><svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> No Installation</h3>
-              <p>Runs directly from this drive. Nothing installed on your computer.</p>
+              <p>Runs straight from this drive — the app and your data stay off the host computer.</p>
             </div>
           </div>
           <p id="setupWelcomeFooter" style="font-size:12px; color:var(--muted); margin-bottom: 24px;">
-            You'll need internet once to download an AI model (~4.5 GB). After that, this app works completely offline.
+            You'll need internet once to download an AI model — typically 1–8 GB, recommended to fit your hardware.
+            After that, this app works completely offline.
           </p>
           <button class="setup-btn-primary" id="setupGoStep2">Continue</button>
         </div>
@@ -4552,7 +4571,9 @@ let conversations = jget(KEYS.convs) || [];
 let activeId = jget(KEYS.active) || null;
 const _hadStoredSettings = !!jget(KEYS.settings);
 let settings = Object.assign({
-  theme: 'dark',
+  // First run follows the OS appearance; the user can change it any time.
+  // Accent stays blue — it matches the brand mark and reads well in both themes.
+  theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark',
   accent: 'blue',
   zoom: 1.0,
   model: '',
@@ -5603,14 +5624,21 @@ function md(markdown) {
       // Think placeholder (already extracted)
       const thinkM = line.match(/\[\[\[THINK_(\d+)(_OPEN)?\]\]\]/);
       if (thinkM) {
-        const isOpen = !!thinkM[2]; // _OPEN = still streaming: expanded + "Thinking…"
+        // _OPEN = still streaming. ChatGPT/Claude-style: the block stays
+        // COLLAPSED and the summary line rolls with the latest thought;
+        // clicking expands the full (markdown-rendered) body live.
+        const isLive = !!thinkM[2];
         const rawThink = think[+thinkM[1]] || '';
-        const body = escapeHtml(rawThink).replace(/\n/g, '<br>');
+        const bodyHtml = rawThink.split('\n').map(l => renderInline(escapeHtml(l))).join('<br>');
         const words = rawThink.trim() ? rawThink.trim().split(/\s+/).length : 0;
-        const label = isOpen
-          ? 'Thinking…'
-          : `Thought process${words ? `<span class="think-count">${words} words</span>` : ''}`;
-        out += ph(`<details class="thinking" ${isOpen ? 'open' : ''}><summary>${label}</summary><div class="think">${body}</div></details>`);
+        let label;
+        if (isLive) {
+          const lastLine = (rawThink.split('\n').filter(l => l.trim()).pop() || '').trim();
+          label = `Thinking…<span class="think-live">${renderInline(escapeHtml(lastLine))}</span>`;
+        } else {
+          label = `Thought process${words ? `<span class="think-count">${words} words</span>` : ''}`;
+        }
+        out += ph(`<details class="thinking${isLive ? ' streaming' : ''}"><summary>${label}</summary><div class="think">${bodyHtml}</div></details>`);
         i++; continue;
       }
 
@@ -6571,7 +6599,14 @@ async function streamReplyFrom(conv, uIdx) {
       const txt = asst.thinking
         ? `<think>${asst.thinking}` + (asst.content ? `</think>${asst.content}` : '')
         : asst.content;
+      // The thinking block is collapsed by default; if the user expanded it,
+      // keep it expanded across the per-token innerHTML re-render.
+      const wasOpen = !!streamingNode.querySelector('details.thinking[open]');
       streamingNode.innerHTML = md(txt) + CURSOR_HTML;
+      if (wasOpen) {
+        const d = streamingNode.querySelector('details.thinking');
+        if (d) d.setAttribute('open', '');
+      }
     };
 
     while (true) {
@@ -8828,6 +8863,7 @@ const ModelStore = {
       let buffer = '';
       let speedText = '';
       let etaText = '';
+      let lastDomUpdate = 0;   // throttle per-line DOM work (pull emits many lines/sec)
 
       while (true) {
         const { done, value } = await reader.read();
@@ -8865,6 +8901,7 @@ const ModelStore = {
 
               // Speed & ETA calculation
               const now = Date.now();
+              const skipDom = (now - lastDomUpdate) < 150 && percent < 100;
               const dt = (now - lastTime) / 1000;
               if (dt > 0.3) {
                 const bytesPerSec = (data.completed - lastBytes) / dt;
@@ -8881,9 +8918,12 @@ const ModelStore = {
                 }
               }
 
-              if (bar) bar.style.width = percent + '%';
-              if (pct) pct.textContent = percent + '%';
-              updateDownloadToast(id, m ? m.name : id, percent, 'downloading', speedText, etaText, data.status);
+              if (!skipDom) {
+                lastDomUpdate = now;
+                if (bar) bar.style.width = percent + '%';
+                if (pct) pct.textContent = percent + '%';
+                updateDownloadToast(id, m ? m.name : id, percent, 'downloading', speedText, etaText, data.status);
+              }
             } else if (data.status === 'pulling manifest') {
               if (pct) pct.textContent = 'Starting...';
               updateDownloadToast(id, m ? m.name : id, 0, 'starting', '', '', data.status);

@@ -117,7 +117,7 @@
       --panel2: rgba(255, 255, 255, 0.04);
       --border: rgba(255, 255, 255, 0.1);
       --text: #ededef;
-      --muted: #9ca3af;
+      --muted: #a6adbb;
       --chip: rgba(255, 255, 255, 0.08);
       --danger: #ff6b6b;
       --code: #18181b;
@@ -125,17 +125,18 @@
       --scrollTrack: transparent;
     }
 
+    /* Warm paper-toned light theme; muted text darkened for WCAG contrast */
     html[data-theme="light"] {
-      --bg: #f4f5f7;
-      --panel: rgba(255, 255, 255, 0.85);
-      --panel2: rgba(0, 0, 0, 0.03);
-      --border: rgba(0, 0, 0, 0.08);
-      --text: #1a1b1e;
-      --muted: #6b7280;
+      --bg: #f6f5f1;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel2: rgba(50, 45, 35, 0.045);
+      --border: rgba(55, 50, 40, 0.12);
+      --text: #1c1b18;
+      --muted: #5d6069;
       --chip: #ffffff;
-      --danger: #d93c3c;
+      --danger: #c93030;
       --code: #1f2937;
-      --scroll: #c1c4cd;
+      --scroll: #c6c3ba;
       --scrollTrack: transparent;
     }
 
@@ -231,7 +232,7 @@
       color: var(--muted);
       width: 28px;
       height: 28px;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -346,6 +347,65 @@
       opacity: 0;
       transition: opacity 0.2s;
       border-radius: 4px;
+    }
+
+    /* Date-group headers in the sidebar */
+    .chatGroupLabel {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0.75;
+      padding: 12px 12px 4px;
+      user-select: none;
+    }
+
+    /* Search-hit snippet under the title */
+    .chatSnippet {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .chatSnippet mark {
+      background: color-mix(in srgb, var(--brand) 30%, transparent);
+      color: inherit;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    .chatPin {
+      justify-self: end;
+      color: var(--muted);
+      padding: 2px 4px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: 4px;
+      line-height: 0;
+    }
+
+    .chatPin:hover {
+      color: var(--brand);
+      background: var(--panel2);
+    }
+
+    .chatItem:hover .chatPin {
+      opacity: 1;
+    }
+
+    /* Pinned chats keep their pin visible */
+    .chatPin.isPinned {
+      opacity: 0.9;
+      color: var(--brand);
+    }
+
+    .app.collapsed .chatPin {
+      display: none;
     }
 
     .chatX:hover {
@@ -581,7 +641,7 @@
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 4px 8px;
       font-size: 11px;
       cursor: pointer;
@@ -623,10 +683,49 @@
       justify-content: flex-end;
     }
 
+    /* Message avatars: assistant brand mark (left), user chip (right) */
+    .avatar {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      margin-top: 2px;
+      user-select: none;
+    }
+
+    .avatar svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .asst .avatar {
+      background: color-mix(in srgb, var(--brand) 16%, transparent);
+      color: var(--brand);
+      border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent);
+    }
+
+    .user .avatar {
+      background: var(--panel2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Grouped (consecutive same-role) messages: hide the repeat avatar but
+       keep its column so bubbles stay aligned, and tighten the gap. */
+    .msg.grouped .avatar {
+      visibility: hidden;
+    }
+
+    .msg.grouped {
+      margin-top: -14px;
+    }
+
     .bubble {
       max-width: 85%;
       padding: 14px 18px;
-      border-radius: 18px;
+      border-radius: 16px;
       line-height: 1.6;
       font-size: 15px;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -663,6 +762,25 @@
     .asst .content {
       font-size: 15px;
       line-height: 1.7;
+    }
+
+    /* Headings inside rendered markdown (md() emits raw h1-h3) */
+    .content h1,
+    .content h2,
+    .content h3 {
+      line-height: 1.3;
+      margin: 18px 0 8px;
+      font-weight: 650;
+    }
+
+    .content h1 { font-size: 1.35em; }
+    .content h2 { font-size: 1.2em; }
+    .content h3 { font-size: 1.08em; }
+
+    .content h1:first-child,
+    .content h2:first-child,
+    .content h3:first-child {
+      margin-top: 4px;
     }
 
     .disclaimer {
@@ -779,6 +897,57 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
+    /* Gutter + code sit side by side; the gutter's font metrics MUST match
+       pre exactly so line numbers stay aligned. */
+    .code-body {
+      display: flex;
+      background: var(--code);
+    }
+
+    .code-body pre {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .code-gutter {
+      flex: 0 0 auto;
+      padding: 16px 0 16px 14px;
+      font-family: 'SF Mono', 'Fira Code', 'Menlo', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      text-align: right;
+      color: var(--muted);
+      opacity: 0.45;
+      user-select: none;
+      min-width: 2ch;
+    }
+
+    .code-gutter span {
+      display: block;
+    }
+
+    /* Long blocks start collapsed (30 lines) with a fade at the cut */
+    .codeblock.collapsed .code-body {
+      max-height: 690px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .codeblock.collapsed .code-body::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 56px;
+      background: linear-gradient(to bottom, transparent, var(--code));
+      pointer-events: none;
+    }
+
+    .expandCode {
+      margin-right: auto;
+    }
+
     .code-lang+pre {
       border-top-left-radius: 0;
       border-top-right-radius: 0;
@@ -792,19 +961,21 @@
       border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .copyCode {
+    .copyCode,
+    .expandCode {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--muted);
       padding: 4px 12px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 11px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .copyCode:hover {
+    .copyCode:hover,
+    .expandCode:hover {
       background: rgba(255, 255, 255, 0.12);
       color: var(--text);
       border-color: rgba(255, 255, 255, 0.2);
@@ -820,12 +991,14 @@
       border-top-color: rgba(0, 0, 0, 0.06);
     }
 
-    html[data-theme="light"] .copyCode {
+    html[data-theme="light"] .copyCode,
+    html[data-theme="light"] .expandCode {
       background: rgba(0, 0, 0, 0.04);
       border-color: rgba(0, 0, 0, 0.1);
     }
 
-    html[data-theme="light"] .copyCode:hover {
+    html[data-theme="light"] .copyCode:hover,
+    html[data-theme="light"] .expandCode:hover {
       background: rgba(0, 0, 0, 0.08);
       border-color: rgba(0, 0, 0, 0.18);
     }
@@ -836,6 +1009,140 @@
 
     html[data-theme="light"] .codeblock {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Welcome screen (empty active chat) */
+    .welcome-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 24px;
+    }
+
+    .welcome-mark {
+      color: var(--brand);
+      margin-bottom: 12px;
+    }
+
+    .welcome-title {
+      font-size: 22px;
+      font-weight: 650;
+    }
+
+    .welcome-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 6px 0 24px;
+    }
+
+    .welcome-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      width: min(560px, 100%);
+    }
+
+    .welcome-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      padding: 14px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .welcome-tile:hover {
+      border-color: var(--brand);
+      transform: translateY(-1px);
+    }
+
+    .wt-icon {
+      color: var(--brand);
+      line-height: 0;
+      margin-bottom: 3px;
+    }
+
+    .wt-label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .wt-desc {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Keyboard-shortcuts help panel */
+    #shortcutsPanel {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      display: grid;
+      place-items: center;
+      z-index: 9000;
+    }
+
+    .sc-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      width: min(420px, 90vw);
+      box-shadow: var(--shadow);
+    }
+
+    .sc-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+
+    .sc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 13px;
+    }
+
+    .sc-row+.sc-row {
+      border-top: 1px solid var(--border);
+    }
+
+    .sc-keys kbd {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 8px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-family: var(--font-main);
+      margin-left: 4px;
+    }
+
+    /* Inline info hint next to setting labels */
+    .hint {
+      display: inline-flex;
+      cursor: help;
+      color: var(--muted);
+      opacity: 0.7;
+      vertical-align: -1px;
+    }
+
+    /* Inline SVG icons (emoji replacement) */
+    .ui-icon {
+      display: inline-block;
+      vertical-align: -2px;
+      flex: none;
     }
 
     /* Syntax highlighting */
@@ -871,6 +1178,22 @@
 
     html[data-theme="light"] .hl-num {
       color: #c2410c;
+    }
+
+    .hl-fn {
+      color: #82aaff;
+    }
+
+    .hl-ty {
+      color: #ffcb6b;
+    }
+
+    html[data-theme="light"] .hl-fn {
+      color: #82aaff;
+    }
+
+    html[data-theme="light"] .hl-ty {
+      color: #ffcb6b;
     }
 
     /* Markdown tables */
@@ -982,6 +1305,17 @@
       color: var(--text);
     }
 
+    .think-count {
+      margin-left: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      opacity: 0.75;
+      background: rgba(128, 128, 128, 0.12);
+      border-radius: 999px;
+      padding: 1px 8px;
+    }
+
     .think {
       padding: 14px 18px;
       font-size: 13.5px;
@@ -1010,7 +1344,7 @@
       padding: 4px 12px;
       color: var(--muted);
       background: var(--panel2);
-      border-radius: 0 6px 6px 0;
+      border-radius: 0 8px 8px 0;
     }
 
     /* Lists */
@@ -1023,6 +1357,22 @@
     .md-ul li,
     .md-ol li {
       margin: 3px 0;
+    }
+
+    /* Blinking caret at the tail of a streaming reply */
+    .stream-cursor {
+      display: inline-block;
+      width: 3px;
+      height: 1.05em;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      background: var(--brand);
+      border-radius: 1px;
+      animation: cursor-blink 0.9s steps(2, start) infinite;
+    }
+
+    @keyframes cursor-blink {
+      50% { opacity: 0; }
     }
 
     .typing-dots {
@@ -1268,7 +1618,7 @@
     .input-model-btn {
       background: transparent;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 8px 14px;
       color: var(--text);
       cursor: pointer;
@@ -1571,6 +1921,13 @@
       transition: all 0.2s;
     }
 
+    /* When a merged tab shows two legacy panes stacked, separate them */
+    .settings-page.active~.settings-page.active {
+      border-top: 1px solid var(--border);
+      margin-top: 24px;
+      padding-top: 20px;
+    }
+
     .settings-tab:hover {
       background: var(--chip);
       color: var(--text);
@@ -1818,7 +2175,7 @@
       color: var(--brand-contrast);
       border: 0;
       padding: 12px 32px;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
@@ -2308,7 +2665,7 @@
     .setup-strategy-box {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 14px 16px;
       margin-bottom: 16px;
     }
@@ -2517,7 +2874,7 @@
       font-size: 20px;
       cursor: pointer;
       padding: 4px 8px;
-      border-radius: 6px;
+      border-radius: 8px;
       transition: .15s;
     }
 
@@ -2712,7 +3069,7 @@
       align-items: center;
       gap: 12px;
       padding: 10px 14px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--border);
       margin-bottom: 6px;
       cursor: pointer;
@@ -2896,7 +3253,7 @@
       background: var(--panel);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 10px 20px;
       font-size: 13px;
       z-index: 3100;
@@ -2920,7 +3277,7 @@
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text);
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 11px;
       padding: 3px 8px;
@@ -3006,7 +3363,7 @@
       color: var(--muted);
       width: 26px;
       height: 26px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 14px;
       cursor: pointer;
       display: inline-flex;
@@ -3065,15 +3422,15 @@
           <p class="subtitle">Your private, offline AI assistant</p>
           <div class="setup-features">
             <div class="setup-feature">
-              <h3>🔒 100% Private</h3>
+              <h3><svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 100% Private</h3>
               <p>Everything stays on this device. No data leaves your machine.</p>
             </div>
             <div class="setup-feature">
-              <h3 id="setupOfflineTitle">📡 Runs offline</h3>
+              <h3 id="setupOfflineTitle"><svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg> Runs offline</h3>
               <p id="setupOfflineDesc">After a one-time model download, no internet needed again.</p>
             </div>
             <div class="setup-feature">
-              <h3>💾 No Installation</h3>
+              <h3><svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> No Installation</h3>
               <p>Runs directly from this drive. Nothing installed on your computer.</p>
             </div>
           </div>
@@ -3215,16 +3572,16 @@
             <!-- Starter Chips -->
             <div style="display:flex; flex-direction:column; gap:10px;">
               <button class="setup-prompt-chip"
-                data-prompt="Analyze the pros and cons of using local LLMs vs cloud APIs.">📊 Analyze local vs cloud
+                data-prompt="Analyze the pros and cons of using local LLMs vs cloud APIs."><svg class="ui-icon" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 13l4-4 4 4 5-6"/></svg> Analyze local vs cloud
                 AI</button>
               <button class="setup-prompt-chip"
-                data-prompt="Write a professional email to a client apologizing for a delayed delivery.">✉️ Write a
+                data-prompt="Write a professional email to a client apologizing for a delayed delivery."><svg class="ui-icon" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg> Write a
                 professional email</button>
               <button class="setup-prompt-chip"
-                data-prompt="Create a sci-fi short story about a time traveler who accidentally prevents the invention of coffee.">🛸
+                data-prompt="Create a sci-fi short story about a time traveler who accidentally prevents the invention of coffee."><svg class="ui-icon" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
                 Write a creative story</button>
               <button class="setup-prompt-chip"
-                data-prompt="Explain how React's virtual DOM works as if I were a 10-year-old.">💻 Explain a technical
+                data-prompt="Explain how React's virtual DOM works as if I were a 10-year-old."><svg class="ui-icon" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> Explain a technical
                 concept</button>
             </div>
           </div>
@@ -3242,12 +3599,12 @@
         <div class="sb-top-bar" style="display:flex; align-items:center; justify-content:space-between; width:100%">
           <div class="sb-title" style="font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px">
             <div
-              style="width:20px; height:20px; flex-shrink:0; background:linear-gradient(135deg, var(--brand), var(--brand-hover)); border-radius:6px">
+              style="width:20px; height:20px; flex-shrink:0; background:linear-gradient(135deg, var(--brand), var(--brand-hover)); border-radius:8px">
             </div>
             PortableAi
           </div>
           <button id="sbToggle" class="iconBtn" title="Toggle Sidebar"
-            style="width:28px; height:28px; border:1px solid var(--border); background:var(--panel2); border-radius:6px; cursor:pointer; transition:all 0.2s; display:grid; place-items:center">
+            style="width:28px; height:28px; border:1px solid var(--border); background:var(--panel2); border-radius:8px; cursor:pointer; transition:all 0.2s; display:grid; place-items:center">
             <svg viewBox="0 0 24 24" width="16" height="16">
               <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor" />
             </svg>
@@ -3319,7 +3676,7 @@
 
         <div class="hdr-right">
           <button id="chatMemToggle" class="menuBtn"
-            style="display:none; margin-right:8px; border:1px solid var(--border); background:transparent; color:var(--muted); padding:4px 8px; font-size:12px; border-radius:6px; cursor:pointer; align-items:center; gap:6px">
+            style="display:none; margin-right:8px; border:1px solid var(--border); background:transparent; color:var(--muted); padding:4px 8px; font-size:12px; border-radius:8px; cursor:pointer; align-items:center; gap:6px">
             <span id="chatMemText">Memory Off</span>
           </button>
           <button id="exitBtn" title="Save & Exit (stop Ollama)">Save & Exit</button>
@@ -3367,17 +3724,17 @@
           </div>
 
           <button id="obStartBtn"
-            style="background:var(--brand); color:#fff; border:0; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:600; width:100%; display:none;">Start
+            style="background:var(--brand); color:#fff; border:0; padding:10px 20px; border-radius:12px; cursor:pointer; font-weight:600; width:100%; display:none;">Start
             Chatting</button>
           <button id="obInstallBtn"
-            style="background:var(--panel2); color:var(--text); border:1px solid var(--border); padding:10px 20px; border-radius:10px; cursor:pointer; width:100%; display:none;">Install
+            style="background:var(--panel2); color:var(--text); border:1px solid var(--border); padding:10px 20px; border-radius:12px; cursor:pointer; width:100%; display:none;">Install
             Suggested Model</button>
         </div>
       </div>
 
       <div id="messages">
       </div>
-      <button id="jump" title="Jump to bottom">⬇</button>
+      <button id="jump" title="Jump to bottom"><svg class="ui-icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
 
       <div id="composer">
         <div id="inputRow">
@@ -3440,7 +3797,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            Chat & Generation
+            Chat & Behavior
           </div>
           <div class="settings-tab" onclick="switchTab('models')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3451,26 +3808,11 @@
             </svg>
             Models
           </div>
-          <div class="settings-tab" onclick="switchTab('behavior-personality')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            Behavior & Personality
-          </div>
           <div class="settings-tab" onclick="switchTab('memory')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M2 12h4l3-9 5 18 3-9h5" />
             </svg>
-            Memory
-          </div>
-          <div class="settings-tab" onclick="switchTab('model-overrides')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3" />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-            </svg>
-            Model Overrides
+            Data & Memory
           </div>
         </div>
 
@@ -3544,7 +3886,7 @@
               <!-- Migration Success Overlay -->
               <div id="migrationSuccess"
                 style="display:none; flex-direction:column; align-items:center; margin-top:12px; padding:16px; background:rgba(16, 185, 129, 0.1); border-radius:8px; border:1px solid #10b981; text-align:center;">
-                <div style="font-size:24px; margin-bottom:8px;">✅</div>
+                <div style="margin-bottom:8px; color:#10b981;"><svg class="ui-icon" style="width:24px;height:24px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div>
                 <div style="font-size:13px; color:var(--text); font-weight:500; margin-bottom:6px;">Migration Complete!
                 </div>
                 <div style="font-size:12px; color:var(--muted); margin-bottom:12px; line-height:1.4;">
@@ -3575,7 +3917,7 @@
 
                 <div class="field">
                   <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-                    <label>Temperature</label>
+                    <label>Temperature <span class="hint" title="Controls randomness. Lower values give focused, repeatable answers; higher values give more varied, creative ones."><svg class="ui-icon" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
                   </div>
                   <div class="chips" id="tempChips">
                     <div class="chip" data-val="0.2">Precise</div>
@@ -3588,7 +3930,7 @@
                 </div>
 
                 <div class="field">
-                  <label>Context Length</label>
+                  <label>Context Length <span class="hint" title="How much of the conversation the model can see at once. Larger contexts remember more but use more RAM and slow the first token."><svg class="ui-icon" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
                   <select id="contextLengthSelect">
                     <option value="2048">2048 tokens (small)</option>
                     <option value="4096" selected>4096 tokens (default)</option>
@@ -3846,7 +4188,7 @@
                       </label>
 
                       <div
-                        style="font-size: 12px; color: var(--muted); background: var(--bgMid); padding: 8px; border-radius: 6px;">
+                        style="font-size: 12px; color: var(--muted); background: var(--bgMid); padding: 8px; border-radius: 8px;">
                         <strong>Current:</strong> <span id="memoryCount">0</span> items stored
                       </div>
                     </div>
@@ -3889,8 +4231,8 @@
 
       <!-- Search Bar -->
       <div style="margin-bottom: 12px;">
-        <input type="text" id="memorySearch" placeholder="🔍 Search memories..."
-          style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit;">
+        <input type="text" id="memorySearch" placeholder="Search memories..."
+          style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit;">
       </div>
 
       <!-- Memory List Container -->
@@ -3903,7 +4245,7 @@
       </div>
       <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:12px">
         <button id="memClearBtn"
-          style="background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer">Clear
+          style="background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Clear
           All Memory</button>
       </div>
     </div>
@@ -3923,7 +4265,7 @@
             Check ollama.com ⟳</button>
           <span id="msCatalogStatus" style="font-size:11px;color:var(--muted)"></span>
         </div>
-        <button class="ms-close" id="msCloseBtn">✕</button>
+        <button class="ms-close" id="msCloseBtn"><svg class="ui-icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>
       <div class="ms-install-strip">
         <input id="msInstallName" type="text" placeholder="e.g., tinyllama or llama3:8b" class="ms-install-input" />
@@ -4417,9 +4759,19 @@ function showToast(message, type = 'info') {
     color: var(--text);
     animation: slideIn 0.3s ease;
     cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
   `;
 
-  toast.textContent = message;
+  // Type-driven SVG icon + text (message stays textContent-safe)
+  const toastIcons = { success: 'check', warning: 'warn', error: 'x', info: 'info' };
+  const iconWrap = document.createElement('span');
+  iconWrap.style.cssText = `color:${colors[type] || colors.info};flex:none;margin-top:1px;`;
+  iconWrap.innerHTML = icon(toastIcons[type] || 'info', 14);
+  const msgSpan = document.createElement('span');
+  msgSpan.textContent = message;
+  toast.append(iconWrap, msgSpan);
   toast.onclick = () => toast.remove();
 
   toastContainer.appendChild(toast);
@@ -4576,7 +4928,143 @@ function mathRender(root) {
 // Note: MemoryStore object is defined in init() function (see line ~1895)
 // Old memory functions removed - consolidated to MemoryStore
 
+/* ---------- Prompt library (welcome-screen tiles) ---------- */
+// Small built-in starter library; clicking a tile drops a random prompt from
+// the category into the composer. Kept inline — the UI ships as one file.
+const PROMPT_LIBRARY = {
+  write: {
+    label: 'Write', desc: 'Emails, posts, letters', icon: 'mail', prompts: [
+      'Write a professional email to a client apologizing for a delayed delivery.',
+      'Draft a friendly LinkedIn post announcing my new side project.',
+      'Write a short cover letter for a junior developer role.',
+      'Rewrite this sentence to sound more confident: "I think I might be able to help with that."',
+    ]
+  },
+  learn: {
+    label: 'Learn', desc: 'Explanations & summaries', icon: 'info', prompts: [
+      'Explain how a neural network learns, as if I were 12 years old.',
+      'What are the key differences between RAM and storage?',
+      'Give me a 5-minute overview of the Roman Empire.',
+      'Quiz me with 5 questions about basic physics, one at a time.',
+    ]
+  },
+  code: {
+    label: 'Code', desc: 'Debug, explain, generate', icon: 'code', prompts: [
+      'Write a Python function that removes duplicates from a list while preserving order.',
+      'Explain what a JavaScript closure is with a short example.',
+      'Write a regex that matches ISO dates like 2026-07-04, with a short explanation.',
+      'Review this approach: storing user settings in a JSON file vs SQLite for a desktop app.',
+    ]
+  },
+  brainstorm: {
+    label: 'Brainstorm', desc: 'Ideas & names', icon: 'spark', prompts: [
+      'Give me 10 name ideas for a cozy neighborhood coffee shop.',
+      'Brainstorm 5 weekend project ideas for someone learning electronics.',
+      'What are some unusual gift ideas for a friend who loves hiking?',
+      'Help me think of a unique angle for a blog about budget travel.',
+    ]
+  },
+  plan: {
+    label: 'Plan', desc: 'Trips, meals, schedules', icon: 'chart', prompts: [
+      'Plan a 3-day trip itinerary for Lisbon on a mid-range budget.',
+      'Create a simple weekly meal plan for two people who like Italian food.',
+      'Build me a 4-week study schedule to prepare for a technical interview.',
+      'Outline a realistic morning routine for someone who starts work at 9am.',
+    ]
+  },
+  fun: {
+    label: 'Have fun', desc: 'Stories & games', icon: 'rocket', prompts: [
+      'Create a sci-fi short story about a time traveler who accidentally prevents the invention of coffee.',
+      'Tell me a riddle and let me guess before revealing the answer.',
+      "Let's play 20 questions — you think of something and I'll guess.",
+      'Write a limerick about a cat who thinks it owns the house.',
+    ]
+  },
+};
+
+function welcomeHtml() {
+  const tiles = Object.entries(PROMPT_LIBRARY).map(([key, cat]) => `
+    <button class="welcome-tile" onclick="usePromptTile('${key}')">
+      <span class="wt-icon">${icon(cat.icon, 16)}</span>
+      <span class="wt-label">${cat.label}</span>
+      <span class="wt-desc">${cat.desc}</span>
+    </button>`).join('');
+  return `
+    <div class="welcome-wrap">
+      <div class="welcome-mark">${icon('spark', 36)}</div>
+      <div class="welcome-title">What can I help with?</div>
+      <div class="welcome-sub">Fully offline — everything stays on this drive.</div>
+      <div class="welcome-tiles">${tiles}</div>
+    </div>`;
+}
+
+function usePromptTile(key) {
+  const cat = PROMPT_LIBRARY[key];
+  if (!cat || !ui.prompt) return;
+  const p = cat.prompts[Math.floor(Math.random() * cat.prompts.length)];
+  ui.prompt.value = p;
+  ui.prompt.dispatchEvent(new Event('input')); // trigger auto-resize
+  ui.prompt.focus();
+}
+window.usePromptTile = usePromptTile;
+
+/* ---------- Inline SVG icon set ---------- */
+// Emoji-free UI: every "icon" is an inline stroke SVG on a 24px grid.
+function icon(name, size = 14) {
+  const paths = {
+    box: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+    ram: '<rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 16v2M12 16v2M17 16v2M6 8V6M10 8V6M14 8V6M18 8V6"/>',
+    bolt: '<path d="M13 2L4 14h6l-1 8 9-12h-6z"/>',
+    disk: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    warn: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    check: '<path d="M20 6L9 17l-5-5"/>',
+    x: '<path d="M18 6L6 18M6 6l12 12"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    chart: '<path d="M3 3v18h18"/><path d="M7 13l4-4 4 4 5-6"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>',
+    rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>',
+    code: '<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>',
+    spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    wifiOff: '<path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>',
+  };
+  return `<svg class="ui-icon" style="width:${size}px;height:${size}px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.info}</svg>`;
+}
+
 /* ---------- Syntax highlighting ---------- */
+// Lightweight single-pass highlighter (offline, no CDN). Strings/comments are
+// slot-protected first; then ONE combined regex colors keywords, function
+// calls, types, and numbers. A single pass means tokens can never nest inside
+// each other's <span> markup — the old multi-pass version let the number
+// regex eat the slot placeholders' digits, which silently DROPPED every
+// string/comment from rendered code blocks.
+const HL_KW = {
+  js: 'const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|default|async|await|try|catch|finally|throw|typeof|instanceof|of|in|null|undefined|true|false|this|super|static|from|yield|delete|void',
+  ts: 'const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|default|async|await|try|catch|finally|throw|typeof|instanceof|of|in|null|undefined|true|false|this|super|static|from|yield|delete|void|type|interface|enum|implements|declare|namespace|abstract|readonly|public|private|protected',
+  py: 'def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|and|or|not|in|is|lambda|yield|global|nonlocal|True|False|None|async|await|self|print',
+  go: 'func|return|if|else|for|range|switch|case|break|continue|var|const|type|struct|interface|package|import|go|defer|select|chan|map|make|new|nil|true|false|error|string|int|int64|float64|bool|byte|rune',
+  sh: 'if|then|else|elif|fi|for|do|done|while|case|esac|function|return|exit|echo|cd|ls|export|local|source|set|unset|readonly|shift|trap|true|false|sudo|grep|sed|awk|curl|git',
+  rust: 'fn|let|mut|const|return|if|else|for|while|loop|match|break|continue|struct|enum|impl|trait|use|mod|pub|crate|super|self|type|where|async|await|move|ref|box|dyn|unsafe|extern|true|false|None|Some|Ok|Err',
+  java: 'class|interface|extends|implements|return|if|else|for|while|do|switch|case|break|continue|new|import|package|public|private|protected|static|final|void|int|long|double|float|boolean|char|byte|short|null|true|false|this|super|try|catch|finally|throw|throws|abstract|synchronized|native|transient|volatile',
+  c: 'int|long|short|char|float|double|void|unsigned|signed|struct|union|enum|typedef|static|extern|const|volatile|return|if|else|for|while|do|switch|case|break|continue|goto|sizeof|include|define|ifdef|ifndef|endif|NULL|true|false|bool|auto|inline|new|delete|class|public|private|protected|template|typename|namespace|using|virtual|override|nullptr|std',
+  cs: 'class|interface|struct|enum|namespace|using|public|private|protected|internal|static|readonly|const|void|int|long|double|float|bool|string|char|var|new|return|if|else|for|foreach|while|do|switch|case|break|continue|try|catch|finally|throw|null|true|false|this|base|async|await|get|set|record|override|virtual|abstract|sealed|partial|where|is|as|in|out|ref',
+  sql: 'select|from|where|and|or|not|insert|into|values|update|set|delete|create|table|alter|drop|index|view|join|inner|left|right|outer|full|on|as|order|by|group|having|limit|offset|distinct|union|all|exists|between|like|in|is|null|primary|key|foreign|references|constraint|default|case|when|then|else|end|count|sum|avg|min|max',
+  rb: 'def|end|class|module|if|elsif|else|unless|case|when|while|until|for|do|return|yield|begin|rescue|ensure|raise|require|include|extend|attr_accessor|attr_reader|attr_writer|new|nil|true|false|self|and|or|not|then|puts|lambda|proc',
+  php: 'function|return|if|else|elseif|for|foreach|while|do|switch|case|break|continue|class|interface|trait|extends|implements|new|public|private|protected|static|const|echo|print|require|include|namespace|use|try|catch|finally|throw|null|true|false|this|array|isset|unset|empty|global|as|instanceof|abstract|final',
+  kt: 'fun|val|var|class|object|interface|return|if|else|for|while|do|when|break|continue|import|package|null|true|false|this|super|is|in|as|try|catch|finally|throw|data|sealed|open|override|abstract|private|public|protected|internal|companion|init|constructor|lateinit|by|lazy|suspend',
+  swift: 'func|let|var|class|struct|enum|protocol|extension|return|if|else|guard|for|while|repeat|switch|case|break|continue|import|nil|true|false|self|super|is|as|try|catch|throw|throws|defer|init|deinit|private|public|internal|fileprivate|open|static|final|override|mutating|typealias|where|in|async|await',
+  css: 'important|inherit|initial|unset|auto|none|block|inline|flex|grid|absolute|relative|fixed|sticky|hover|focus|active|root|media|keyframes|import|supports',
+};
+const HL_ALIAS = {
+  javascript: 'js', jsx: 'js', mjs: 'js', node: 'js', typescript: 'ts', tsx: 'ts',
+  python: 'py', python3: 'py', golang: 'go', bash: 'sh', shell: 'sh', zsh: 'sh',
+  console: 'sh', 'c++': 'c', cpp: 'c', cc: 'c', h: 'c', hpp: 'c', csharp: 'cs',
+  'c#': 'cs', ruby: 'rb', kotlin: 'kt', rs: 'rust', htm: 'html', xhtml: 'html',
+};
+
 function highlight(code, lang) {
   const slots = [];
   let s = code;
@@ -4592,30 +5080,38 @@ function highlight(code, lang) {
   // Step 2: escape remaining HTML
   s = escapeHtml(s);
 
-  // Step 3: keywords (language-aware subset)
-  const KW = {
-    js: /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|default|async|await|try|catch|finally|throw|typeof|instanceof|of|in|null|undefined|true|false|this|super|static|from|yield|delete|void)\b/g,
-    ts: /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|default|async|await|try|catch|finally|throw|typeof|instanceof|of|in|null|undefined|true|false|this|super|static|from|type|interface|enum|implements|declare|namespace|abstract|readonly|public|private|protected)\b/g,
-    py: /\b(def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|and|or|not|in|is|lambda|yield|global|nonlocal|True|False|None|async|await)\b/g,
-    go: /\b(func|return|if|else|for|range|switch|case|break|continue|var|const|type|struct|interface|package|import|go|defer|select|chan|map|make|new|nil|true|false|error|string|int|int64|float64|bool|byte|rune)\b/g,
-    sh: /\b(if|then|else|elif|fi|for|do|done|while|case|esac|function|return|exit|echo|cd|ls|export|local|source|set|unset|readonly|shift|trap|true|false)\b/g,
-    rust: /\b(fn|let|mut|const|return|if|else|for|while|loop|match|break|continue|struct|enum|impl|trait|use|mod|pub|crate|super|self|type|where|async|await|move|ref|box|dyn|unsafe|extern|true|false|None|Some|Ok|Err)\b/g,
-    java: /\b(class|interface|extends|implements|return|if|else|for|while|do|switch|case|break|continue|new|import|package|public|private|protected|static|final|void|int|long|double|float|boolean|char|byte|short|null|true|false|this|super|try|catch|finally|throw|throws|abstract|synchronized|native|transient|volatile)\b/g,
-    css: /\b(important|inherit|initial|unset|auto|none|block|inline|flex|grid|absolute|relative|fixed|sticky)\b/g,
-  };
-  const langMap = { javascript: 'js', typescript: 'ts', python: 'py', golang: 'go', bash: 'sh', shell: 'sh', zsh: 'sh' };
-  const l = langMap[lang] || lang;
-  if (KW[l]) {
-    s = s.replace(KW[l], '<span class="hl-kw">$1</span>');
+  const restore = (t) => t.replace(/\x00(\d+)\x00/g, (_, i) => slots[+i]);
+  const l = HL_ALIAS[(lang || '').toLowerCase()] || (lang || '').toLowerCase();
+
+  // Markup languages: color tag names, then bail (attribute strings are
+  // already slot-colored).
+  if (l === 'html' || l === 'xml' || l === 'svg') {
+    return restore(s.replace(/(&lt;\/?)([a-zA-Z][\w-]*)/g, '$1<span class="hl-kw">$2</span>'));
   }
 
-  // Step 4: numbers
-  s = s.replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-num">$1</span>');
+  let kwSrc = HL_KW[l] || null;
+  // SQL is conventionally written in either case.
+  if (l === 'sql' && kwSrc) kwSrc = kwSrc.split('|').map(w => `${w.toUpperCase()}|${w}`).join('|');
 
-  // Step 5: restore slots
-  s = s.replace(/\x00(\d+)\x00/g, (_, i) => slots[+i]);
+  // Step 3: one combined pass — keyword | functionCall( | Type | number.
+  // The \x00 guards keep the slot placeholders' digits untouched.
+  const combined = new RegExp(
+    `\\b(${kwSrc || '(?!x)x'})\\b` +
+    `|([A-Za-z_$][\\w$]*)(?=\\s*\\()` +
+    `|\\b([A-Z][A-Za-z0-9_]{2,})\\b` +
+    `|(?<![\\x00\\w.])(\\d[\\d_]*(?:\\.\\d+)?)(?![\\w\\x00])`,
+    'g'
+  );
+  s = s.replace(combined, (m, kw, fn, ty, num) => {
+    if (kw !== undefined) return `<span class="hl-kw">${kw}</span>`;
+    if (fn !== undefined) return `<span class="hl-fn">${fn}</span>`;
+    if (ty !== undefined) return `<span class="hl-ty">${ty}</span>`;
+    if (num !== undefined) return `<span class="hl-num">${num}</span>`;
+    return m;
+  });
 
-  return s;
+  // Step 4: restore slots
+  return restore(s);
 }
 
 /* ---------- markdown + think collapse + code copy (STREAM-AWARE CODE FENCES) ---------- */
@@ -4749,9 +5245,14 @@ function md(markdown) {
       // Think placeholder (already extracted)
       const thinkM = line.match(/\[\[\[THINK_(\d+)(_OPEN)?\]\]\]/);
       if (thinkM) {
-        const isOpen = !!thinkM[2];
-        const body = escapeHtml(think[+thinkM[1]] || '').replace(/\n/g, '<br>');
-        out += ph(`<details class="thinking" ${isOpen ? 'open' : ''}><summary>Thinking...</summary><div class="think">${body}</div></details>`);
+        const isOpen = !!thinkM[2]; // _OPEN = still streaming: expanded + "Thinking…"
+        const rawThink = think[+thinkM[1]] || '';
+        const body = escapeHtml(rawThink).replace(/\n/g, '<br>');
+        const words = rawThink.trim() ? rawThink.trim().split(/\s+/).length : 0;
+        const label = isOpen
+          ? 'Thinking…'
+          : `Thought process${words ? `<span class="think-count">${words} words</span>` : ''}`;
+        out += ph(`<details class="thinking" ${isOpen ? 'open' : ''}><summary>${label}</summary><div class="think">${body}</div></details>`);
         i++; continue;
       }
 
@@ -4837,17 +5338,29 @@ function md(markdown) {
     return out;
   }
 
+  const COLLAPSE_LINES = 30;
   let out = '';
-  for (const seg of segs) {
+  for (let si = 0; si < segs.length; si++) {
+    const seg = segs[si];
     if (seg.type === 'text') {
       out += renderBlock(seg.content);
     } else if (seg.type === 'code-begin') {
+      // The parser always emits code-begin, one code seg, then code-end —
+      // build the whole block here (gutter needs the line count up front).
+      const codeSeg = (segs[si + 1] && segs[si + 1].type === 'code') ? segs[si + 1] : { content: '', lang: seg.lang };
+      const codeText = codeSeg.content;
+      const lineCount = codeText ? codeText.split('\n').length : 1;
+      const collapsed = lineCount > COLLAPSE_LINES;
       const l = seg.lang ? `<span class="code-lang">${escapeHtml(seg.lang)}</span>` : '';
-      out += `<div class="codeblock">${l}<pre><code>`;
-    } else if (seg.type === 'code') {
-      out += highlight(seg.content, seg.lang || '');
-    } else if (seg.type === 'code-end') {
-      out += `</code></pre><div class="code-footer"><button class="copyCode" title="Copy code">Copy</button></div></div>`;
+      let gutter = '';
+      for (let k = 1; k <= lineCount; k++) gutter += `<span>${k}</span>`;
+      out += `<div class="codeblock${collapsed ? ' collapsed' : ''}">${l}` +
+        `<div class="code-body"><div class="code-gutter" aria-hidden="true">${gutter}</div>` +
+        `<pre><code>${highlight(codeText, seg.lang || '')}</code></pre></div>` +
+        `<div class="code-footer">${collapsed ? `<button class="expandCode">Show all ${lineCount} lines</button>` : ''}` +
+        `<button class="copyCode" title="Copy code">Copy</button></div></div>`;
+      if (segs[si + 1] && segs[si + 1].type === 'code') si++;
+      if (segs[si + 1] && segs[si + 1].type === 'code-end') si++;
     }
   }
   return out;
@@ -4876,14 +5389,27 @@ function applyAccent(key) {
   if (ui.accentDot) ui.accentDot.style.background = a.dot;
   settings.accent = key; jsave(KEYS.settings, settings); persistUiSettings();
 }
+// Set the accent CSS vars only — used for hover preview (no save)
+function previewAccentVars(key) {
+  const a = ACCENTS[key] || ACCENTS.blue;
+  const s = document.documentElement.style;
+  s.setProperty('--user-bubble', a.bg);
+  s.setProperty('--user-border', a.border);
+  s.setProperty('--brand', a.solid);
+  s.setProperty('--brand-hover', a.hover);
+  s.setProperty('--brand-contrast', a.contrastOverride || contrastText(a.solid));
+}
 function buildAccentMenu() {
   ui.accentMenu.innerHTML = '';
   Object.entries(ACCENTS).forEach(([key, a]) => {
     const row = document.createElement('div'); row.className = 'menuItem';
     row.innerHTML = `<span>${a.label}</span><span class="dot" style="background:${a.dot}"></span>`;
     row.addEventListener('click', () => { applyAccent(key); closeMenus(); });
+    // Live preview on hover; restore the saved accent when the pointer leaves
+    row.addEventListener('mouseenter', () => previewAccentVars(key));
     ui.accentMenu.appendChild(row);
   });
+  ui.accentMenu.addEventListener('mouseleave', () => previewAccentVars(settings.accent || 'blue'));
 }
 function applyTheme(name) {
   document.documentElement.setAttribute('data-theme', name);
@@ -4916,14 +5442,45 @@ function closeMenus() {
   }
 }
 document.addEventListener('click', e => { if (!e.target.closest('.wrap')) closeMenus(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenus(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeMenus();
+    document.getElementById('shortcutsPanel')?.remove();
+  }
+});
+
+/* ---------- Keyboard-shortcuts help panel (Cmd/Ctrl+/) ---------- */
+function toggleShortcutsPanel() {
+  const existing = document.getElementById('shortcutsPanel');
+  if (existing) { existing.remove(); return; }
+  const mod = /mac/i.test(navigator.platform) ? '⌘' : 'Ctrl';
+  const rows = [
+    [`${mod} K`, 'New chat'],
+    [`${mod} B`, 'Toggle sidebar'],
+    [`${mod} F`, 'Search conversations'],
+    [`${mod} L`, 'Focus the message box'],
+    ['Enter', 'Send message'],
+    ['Shift Enter', 'New line'],
+    ['Esc', 'Close menus and dialogs'],
+    [`${mod} /`, 'Show this panel'],
+  ];
+  const panel = document.createElement('div');
+  panel.id = 'shortcutsPanel';
+  panel.innerHTML = `<div class="sc-card">
+    <div class="sc-title">Keyboard shortcuts</div>
+    ${rows.map(([k, d]) => `<div class="sc-row"><span>${d}</span><span class="sc-keys">${k.split(' ').map(x => `<kbd>${x}</kbd>`).join('')}</span></div>`).join('')}
+  </div>`;
+  panel.addEventListener('click', e => { if (e.target === panel) panel.remove(); });
+  document.body.appendChild(panel);
+}
+window.toggleShortcutsPanel = toggleShortcutsPanel;
 
 /* ---------- Sidebar + conversations ---------- */
 function applySidebarCollapsed(f) {
   settings.sidebarCollapsed = !!f; jsave(KEYS.settings, settings); persistUiSettings();
   ui.appGrid.classList.toggle('collapsed', f);
   ui.sbToggle.title = f ? 'Show taskbar' : 'Hide taskbar';
-  ui.sbToggle.textContent = f ? '❮' : '❯';
+  ui.sbToggle.innerHTML = `<svg class="ui-icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${f ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6'}"/></svg>`;
   if (f) ui.sbSearch.style.display = 'none';
 }
 let ensureLock = false;
@@ -5020,7 +5577,7 @@ function stopStream() { if (streaming) { streaming.abort(); streaming = null; st
 document.addEventListener('click', e => {
   const cp = e.target.closest('.copy'); if (cp) {
     const idx = +cp.dataset.idx; const conv = conversations.find(c => c.id === activeId); const m = conv?.messages[idx];
-    if (m) { navigator.clipboard.writeText(m.content || ''); const svg = cp.querySelector('svg'); const prev = svg.innerHTML; svg.innerHTML = '<path d="M9 16.2 5.8 13l-1.4 1.4L9 19 21 7l-1.4-1.4z" fill="currentColor"/>'; setTimeout(() => svg.innerHTML = prev, 900); }
+    if (m) { navigator.clipboard.writeText(m.content || ''); showToast('Copied to clipboard', 'success'); const svg = cp.querySelector('svg'); const prev = svg.innerHTML; svg.innerHTML = '<path d="M9 16.2 5.8 13l-1.4 1.4L9 19 21 7l-1.4-1.4z" fill="currentColor"/>'; setTimeout(() => svg.innerHTML = prev, 900); }
     return;
   }
   const ed = e.target.closest('.edit'); if (ed) {
@@ -5028,6 +5585,9 @@ document.addEventListener('click', e => {
     if (!msg || msg.role !== 'user') return;
     const wrap = $(`.msg[data-idx="${idx}"]`, ui.messages); const content = wrap?.querySelector('.content'); if (!content) return;
     content.innerHTML = `<textarea class="editBox" style="width:100%;min-height:90px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px">${escapeHtml(msg.content)}</textarea>`;
+    const editTa = content.querySelector('.editBox');
+    editTa.focus();
+    editTa.setSelectionRange(editTa.value.length, editTa.value.length);
     const tools = wrap.querySelector('.msg-tools-row');
     tools.innerHTML = `<button class="iconBtn saveEdit" data-idx="${idx}" title="Save"><svg viewBox="0 0 24 24"><path d="M9 16.2 5.8 13l-1.4 1.4L9 19 21 7l-1.4-1.4z" fill="currentColor"/></svg></button><button class="iconBtn cancelEdit" data-idx="${idx}" title="Cancel"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3 10.6 10.6 16.9 4.3z" fill="currentColor"/></svg></button>`;
     return;
@@ -5051,6 +5611,16 @@ document.addEventListener('click', e => {
     const code = btn.closest('.codeblock')?.querySelector('pre code')?.textContent || '';
     navigator.clipboard.writeText(code);
     flashOk(btn, '✓ Copied');
+    return;
+  }
+  if (e.target.classList.contains('expandCode') || e.target.closest('.expandCode')) {
+    const btn = e.target.closest('.expandCode');
+    const block = btn.closest('.codeblock');
+    if (block) {
+      const collapsed = block.classList.toggle('collapsed');
+      const lines = block.querySelectorAll('.code-gutter span').length;
+      btn.textContent = collapsed ? `Show all ${lines} lines` : 'Collapse';
+    }
     return;
   }
   if (e.target.classList.contains('cancelEdit') || e.target.closest('.cancelEdit')) {
@@ -5138,16 +5708,69 @@ function renderSidebar() {
     const contentMatch = c.messages.some(m => (m.content || '').toLowerCase().includes(term));
     return titleMatch || contentMatch;
   }).sort((a, b) => convUpdatedAt(b) - convUpdatedAt(a)); // most-recently-updated first
-  ui.chatList.innerHTML = list.map(c => `
+
+  const PIN_SVG = '<svg class="ui-icon" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>';
+
+  const itemHtml = (c) => {
+    // While searching, show a snippet of the first matching message
+    let snippet = '';
+    if (term) {
+      const hit = c.messages.find(m => (m.content || '').toLowerCase().includes(term));
+      if (hit) {
+        const at = hit.content.toLowerCase().indexOf(term);
+        const start = Math.max(0, at - 24);
+        const frag = (start > 0 ? '…' : '') + hit.content.slice(start, at + term.length + 44);
+        const safe = escapeHtml(frag).replace(
+          new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+          s => `<mark>${s}</mark>`);
+        snippet = `<div class="chatSnippet">${safe}</div>`;
+      }
+    }
+    return `
     <div class="chatItem ${c.id === activeId ? 'active' : ''}" onclick="setActive('${c.id}')">
       <div class="chatItemMain">
         <div class="chatTitle" ondblclick="renameChat(event, '${c.id}')" title="Double-click to rename">${escapeHtml(c.title || 'New chat')}</div>
+        ${snippet}
         <div class="chatMeta"><span class="chatModel">${escapeHtml(c.model || '')}</span><span class="chatDate">${fmtChatDate(convUpdatedAt(c))}</span></div>
       </div>
+      <div class="chatPin ${c.pinned ? 'isPinned' : ''}" onclick="togglePin(event, '${c.id}')" title="${c.pinned ? 'Unpin' : 'Pin'}">${PIN_SVG}</div>
       <div class="chatX" onclick="deleteChat(event, '${c.id}')" title="Delete chat">×</div>
-    </div>
-  `).join('');
+    </div>`;
+  };
+
+  // Flat result list while searching; grouped by date otherwise
+  if (term) {
+    ui.chatList.innerHTML = list.map(itemHtml).join('');
+    return;
+  }
+
+  const now = new Date();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const DAY = 86400000;
+  const groups = [['Pinned', []], ['Today', []], ['Yesterday', []], ['Previous 7 days', []], ['Older', []]];
+  for (const c of list) {
+    const t = convUpdatedAt(c);
+    if (c.pinned) groups[0][1].push(c);
+    else if (t >= dayStart) groups[1][1].push(c);
+    else if (t >= dayStart - DAY) groups[2][1].push(c);
+    else if (t >= dayStart - 7 * DAY) groups[3][1].push(c);
+    else groups[4][1].push(c);
+  }
+  ui.chatList.innerHTML = groups
+    .filter(([, arr]) => arr.length)
+    .map(([label, arr]) => `<div class="chatGroupLabel">${label}</div>` + arr.map(itemHtml).join(''))
+    .join('');
 }
+
+function togglePin(e, id) {
+  e.stopPropagation();
+  const c = conversations.find(c => c.id === id);
+  if (!c) return;
+  c.pinned = !c.pinned;
+  jsave(KEYS.convs, conversations);
+  renderSidebar();
+}
+window.togglePin = togglePin;
 
 function renameChat(e, id) {
   e.stopPropagation();
@@ -5217,17 +5840,18 @@ function renderMessages(scroll) {
     if (conversations.length === 0 && ui.checkOnboarding) {
       // handled by checkOnboarding
     } else {
-      ui.messages.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);opacity:0.6">
-          <div style="font-size:48px;margin-bottom:16px">✨</div>
-          <div style="font-size:16px;font-weight:500">PortableAi</div>
-          <div style="font-size:13px;margin-top:4px">Ready to chat</div>
-        </div>`;
+      ui.messages.innerHTML = welcomeHtml();
     }
     if (conversations.length === 0 && ui.onboarding) ui.onboarding.style.display = 'block';
     return;
   }
   if (ui.onboarding && PromptStateManager.current !== 'no-models') ui.onboarding.style.display = 'none';
+
+  // A fresh, empty conversation gets the welcome tiles too
+  if (!conv.messages.length) {
+    ui.messages.innerHTML = welcomeHtml();
+    return;
+  }
 
   ui.messages.innerHTML = conv.messages.map((m, i) => {
     // Tools HTML
@@ -5257,20 +5881,26 @@ function renderMessages(scroll) {
       if (parts.length) metaHtml = `<div class="model-meta">${parts.join(' • ')}</div>`;
     }
 
+    // Consecutive messages from the same role render as a visual group:
+    // only the first shows an avatar, the rest tuck in closer.
+    const grouped = i > 0 && conv.messages[i - 1].role === m.role;
+
     if (m.role === 'user') {
       return `
-        <div class="msg user" data-idx="${i}">
+        <div class="msg user${grouped ? ' grouped' : ''}" data-idx="${i}">
           <div class="row">
             <div class="bubble">
               <div class="content">${md(m.content)}</div>
             </div>
+            <div class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             ${toolsHtml}
           </div>
         </div>`;
     } else {
       return `
-        <div class="msg asst" data-idx="${i}">
+        <div class="msg asst${grouped ? ' grouped' : ''}" data-idx="${i}">
           <div class="row">
+            <div class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18 15l.9 2.6L21.5 18.5l-2.6.9L18 22l-.9-2.6-2.6-.9 2.6-.9z"/></svg></div>
             <div class="bubble">
               <div class="content">${md(m.thinking ? `<think>${m.thinking}</think>${m.content}` : m.content)}</div>
               ${metaHtml}
@@ -5494,6 +6124,24 @@ async function streamReplyFrom(conv, uIdx) {
     let buf = '';
     let finalStats = null;
     let isThinking = false; // Track if model is in thinking phase
+    let parseFails = 0;     // malformed NDJSON lines skipped (see post-loop check)
+
+    // Live re-render during streaming: keep the typing dots up until the first
+    // VISIBLE token (whitespace-only prefixes used to blank the bubble), then
+    // show content with a blinking caret at the stream tail.
+    const CURSOR_HTML = '<span class="stream-cursor" aria-hidden="true"></span>';
+    const DOTS_HTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+    const renderStream = () => {
+      if (!streamingNode) return;
+      if (!asst.content.trim() && !(asst.thinking || '').trim()) {
+        if (!streamingNode.querySelector('.typing-dots')) streamingNode.innerHTML = DOTS_HTML;
+        return;
+      }
+      const txt = asst.thinking
+        ? `<think>${asst.thinking}` + (asst.content ? `</think>${asst.content}` : '')
+        : asst.content;
+      streamingNode.innerHTML = md(txt) + CURSOR_HTML;
+    };
 
     while (true) {
       const { value, done } = await reader.read();
@@ -5528,10 +6176,8 @@ async function streamReplyFrom(conv, uIdx) {
               showLeftLoading(model, 'Thinking...');
             }
             asst.thinking += obj.message.thinking;
-            // Render thinking as a live open <think> block
-            if (streamingNode) {
-              streamingNode.innerHTML = md(`<think>${asst.thinking}` + (asst.content ? `</think>${asst.content}` : ''));
-            }
+            // Render thinking as a live open <think> block (caret at tail)
+            renderStream();
             if (pinnedToBottom) snapToBottom();
           }
           if (obj.message && obj.message.content) {
@@ -5540,16 +6186,20 @@ async function streamReplyFrom(conv, uIdx) {
               hideLeftLoading();
             }
             asst.content += obj.message.content;
-            // Combine thinking + content for render
-            const fullText = asst.thinking
-              ? `<think>${asst.thinking}</think>${asst.content}`
-              : asst.content;
-            if (streamingNode) {
-              streamingNode.innerHTML = md(fullText);
-            }
+            // Combined thinking + content render, caret at the stream tail
+            renderStream();
             if (pinnedToBottom) snapToBottom();
           }
-        } catch { }
+        } catch { parseFails++; }
+      }
+    }
+
+    // NDJSON feedback: malformed lines are skipped, but if the WHOLE stream
+    // produced nothing, tell the user instead of ending on an empty bubble.
+    if (parseFails > 0) {
+      console.warn(`[PortableAI] Skipped ${parseFails} malformed stream line(s).`);
+      if (!asst.content && !asst.thinking) {
+        throw new Error(`The model returned ${parseFails} unreadable stream line(s) and no text — it may be incompatible with this Ollama version.`);
       }
     }
 
@@ -5568,8 +6218,7 @@ async function streamReplyFrom(conv, uIdx) {
         }
         if (obj.message && obj.message.content) {
           asst.content += obj.message.content;
-          const fullText = asst.thinking ? `<think>${asst.thinking}</think>${asst.content}` : asst.content;
-          if (streamingNode) streamingNode.innerHTML = md(fullText);
+          renderStream();
         }
       } catch { }
     }
@@ -5601,15 +6250,23 @@ async function streamReplyFrom(conv, uIdx) {
   } catch (err) {
     if (!controller.signal.aborted) {
       let msg = String(err).replace('Error:', '').trim();
+      // Categorized errors with a recovery hint each
       if (msg.includes('Failed to fetch')) {
         msg = 'Couldn\'t reach Ollama. Retrying connection...';
         // Trigger immediate reconnection check
         ui.updateStatusBar(false, 0);
         PromptStateManager.update('server-disconnected');
+      } else if (/HTTP 404/.test(msg)) {
+        msg = `"${model}" isn't installed — open the Model Store and download it, or pick another model.`;
+        PromptStateManager.update('ready');
       } else if (msg.toLowerCase().includes('oom') || msg.toLowerCase().includes('memory')) {
+        msg = 'Ran out of memory — switch to a smaller model or lower the context length in Settings.';
         PromptStateManager.update('error-oom');
       } else if (msg.toLowerCase().includes('busy') || msg.toLowerCase().includes('rate')) {
         PromptStateManager.update('error-busy', { errorMsg: msg });
+      } else if (/HTTP 5\d\d/.test(msg)) {
+        msg = `Ollama hit an internal error (${msg}). The log at app_data/data/ollama.log has details.`;
+        PromptStateManager.update('ready');
       } else {
         PromptStateManager.update('ready');
       }
@@ -5620,7 +6277,7 @@ async function streamReplyFrom(conv, uIdx) {
         errDiv.style.cssText = 'color:var(--danger); font-size:12px; margin-top:8px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;';
         document.getElementById('composer').appendChild(errDiv);
       }
-      errDiv.innerHTML = `<span>⚠️ ${escapeHtml(msg)}</span> <button id="retryBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); border-radius:6px; padding:2px 8px; font-size:11px; cursor:pointer;">Retry</button>`;
+      errDiv.innerHTML = `<span>${icon('warn', 13)} ${escapeHtml(msg)}</span> <button id="retryBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:2px 8px; font-size:11px; cursor:pointer;">Retry</button>`;
       errDiv.style.display = 'flex';
       document.getElementById('retryBtn').onclick = () => {
         errDiv.style.display = 'none';
@@ -6141,7 +6798,7 @@ async function installModelStream(name) {
 
   // A. Install lifecycle - queued
   updateActivity(`Queued install for "${name}"…`, 'neutral');
-  showToast(`⏳ "${name}" has been added to the install queue.`, 'info');
+  showToast(`"${name}" has been added to the install queue.`, 'info');
 
   try {
     // A. Install lifecycle - started
@@ -6398,11 +7055,11 @@ async function uninstallModel(name) {
       if (r.status === 404) {
         // J. Model not found
         updateActivity(`Uninstall failed: model "${name}" not found.`, 'warning');
-        showToast(`⚠️ "${name}" may have already been removed.`, 'warning');
+        showToast(`"${name}" may have already been removed.`, 'warning');
       } else if (r.status === 409) {
         // J. Model currently running
         updateActivity(`Uninstall failed: "${name}" is currently running.`, 'error');
-        showToast(`❌ Stop "${name}" and try uninstalling again.`, 'error');
+        showToast(`Stop "${name}" and try uninstalling again.`, 'error');
       } else {
         // J. API delete failed - show CLI fallback
         updateActivity(`Uninstall failed via API.`, 'error');
@@ -6416,7 +7073,7 @@ async function uninstallModel(name) {
         document.execCommand('copy');
         document.body.removeChild(tempInput);
 
-        showToast(`📋 CLI command copied: ${cliCommand}. Run this in a terminal to remove the model manually.`, 'warning');
+        showToast(`CLI command copied: ${cliCommand}. Run this in a terminal to remove the model manually.`, 'warning');
       }
       return;
     }
@@ -6431,7 +7088,7 @@ async function uninstallModel(name) {
   } catch (e) {
     // J. Unknown error
     updateActivity(`Uninstall failed due to an unexpected error.`, 'error');
-    showToast(`❌ Try again. Check the PortableAi log for details.`, 'error');
+    showToast(`Try again. Check the PortableAi log for details.`, 'error');
     console.error('Uninstall error:', e);
   }
 }
@@ -6572,7 +7229,7 @@ function updateDownloadToast(id, name, percent, status, speed, eta, actionStr) {
   let storageText = '';
   if (window.ModelStore && ModelStore.state && ModelStore.state.driveSpace) {
     const s = ModelStore.state.driveSpace;
-    storageText = `💾 ${formatSize(s.used)} / ${formatSize(s.total)} used`;
+    storageText = `${icon('disk', 12)} ${formatSize(s.used)} / ${formatSize(s.total)} used`;
   }
 
   if (!toast) {
@@ -6858,11 +7515,11 @@ function setupRenderModels() {
         </div>
         <div class="setup-card-desc">${m.description}</div>
         <div class="setup-card-specs">
-          <span>📦 ${m.size}${isExisting ? ' (already on drive)' : ''}</span>
-          <span>💾 ${m.minRAM}+ GB RAM</span>
-          <span>⚡ ${speedLabel}</span>
+          <span>${icon('box')} ${m.size}${isExisting ? ' (already on drive)' : ''}</span>
+          <span>${icon('ram')} ${m.minRAM}+ GB RAM</span>
+          <span>${icon('bolt')} ${speedLabel}</span>
         </div>
-        <div class="setup-card-warn">⚠️ This model may run slowly or cause freezing on machines with ${ram} GB RAM.</div>
+        <div class="setup-card-warn">${icon('warn')} This model may run slowly or cause freezing on machines with ${ram} GB RAM.</div>
       </div>
     </div>`;
   };
@@ -7205,11 +7862,11 @@ function initSetupFlow(existingTags) {
   const welcomeFooter = document.getElementById('setupWelcomeFooter');
 
   if (hasModel) {
-    if (offlineTitle) offlineTitle.textContent = '📡 Works offline';
+    if (offlineTitle) offlineTitle.innerHTML = `${icon('wifiOff', 15)} Works offline`;
     if (offlineDesc) offlineDesc.textContent = 'No internet connection needed. Runs anywhere, anytime.';
     if (welcomeFooter) welcomeFooter.style.display = 'none';
   } else {
-    if (offlineTitle) offlineTitle.textContent = '📡 Runs offline';
+    if (offlineTitle) offlineTitle.innerHTML = `${icon('wifiOff', 15)} Runs offline`;
     if (offlineDesc) offlineDesc.textContent = 'After a one-time model download, no internet needed again.';
     if (welcomeFooter) welcomeFooter.style.display = 'block';
   }
@@ -7485,7 +8142,7 @@ const ModelStore = {
         if (name) {
           installModelStream(name);
         } else {
-          showToast('⚠️ Please enter a model name', 'warning');
+          showToast('Please enter a model name', 'warning');
         }
       };
     }
@@ -7495,7 +8152,7 @@ const ModelStore = {
           e.preventDefault();
           const name = msInstallInput.value.trim();
           if (name) { installModelStream(name); }
-          else { showToast('⚠️ Please enter a model name', 'warning'); }
+          else { showToast('Please enter a model name', 'warning'); }
         }
       };
     }
@@ -7602,9 +8259,9 @@ const ModelStore = {
             </div>
             <div class="ms-card-desc" title="${m.description}">${m.description}</div>
             <div class="ms-card-specs">
-              <span>📦 ${sizeText}</span>
-              <span>💾 ${m.minRAM}+ GB RAM</span>
-              <span>⚡ ${speedText}</span>
+              <span>${icon('box')} ${sizeText}</span>
+              <span>${icon('ram')} ${m.minRAM}+ GB RAM</span>
+              <span>${icon('bolt')} ${speedText}</span>
               <span style="opacity:0.6">${m.maker}</span>
             </div>
           </div>
@@ -7639,8 +8296,8 @@ const ModelStore = {
               <span class="ms-card-name">${name}</span>
             </div>
             <div class="ms-card-specs">
-              ${lm.size ? `<span>📦 ${formatSize(lm.size)}</span>` : ''}
-              ${lm.modified_at ? `<span>🕘 ${String(lm.modified_at).slice(0, 10)}</span>` : ''}
+              ${lm.size ? `<span>${icon('box')} ${formatSize(lm.size)}</span>` : ''}
+              ${lm.modified_at ? `<span>${icon('clock')} ${String(lm.modified_at).slice(0, 10)}</span>` : ''}
               <span><a href="https://ollama.com/library/${base}" target="_blank" rel="noopener" style="color:var(--muted)">details ↗</a></span>
             </div>
           </div>
@@ -7688,7 +8345,7 @@ const ModelStore = {
       this.state.downloadQueue.push(id);
       SharedInstallState.register('sq-' + id, id, 'store', 'queued');
       const displayName = m ? m.name : id;
-      showToast(`⏳ "${displayName}" queued — starts when current download finishes.`, 'info');
+      showToast(`"${displayName}" queued — starts when current download finishes.`, 'info');
       this.render(); // Update UI to show "Queued" state
       return;
     }
@@ -8229,7 +8886,7 @@ async function init() {
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
         Choose where to store your models. Default is inside the portable folder.
       </div>
-      <div style="display:flex;gap:10px;align-items:center;background:var(--bg-2);padding:8px;border-radius:6px;margin-bottom:10px">
+      <div style="display:flex;gap:10px;align-items:center;background:var(--bg-2);padding:8px;border-radius:8px;margin-bottom:10px">
         <div id="currentModelPath" style="font-family:monospace;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">Loading...</div>
       </div>
       <div style="display:flex;gap:10px">
@@ -8752,6 +9409,7 @@ async function init() {
           ui.search.select();
           break;
         case 'l': e.preventDefault(); ui.prompt.focus(); break;
+        case '/': e.preventDefault(); toggleShortcutsPanel(); break;
       }
     }
   });
@@ -8912,7 +9570,7 @@ async function init() {
         <div style="flex:1;margin-right:8px">
           <div class="mem-text"style="margin-bottom:4px;line-height:1.4">${escapeHtml(m.text)}</div>
           <div style="font-size:10px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap">
-            <span>📁 ${escapeHtml(m.category || 'general')}</span>
+            <span>${icon('folder')} ${escapeHtml(m.category || 'general')}</span>
             <span>📅 ${new Date(m.createdAt).toLocaleDateString()}</span>
             ${m.updateCount > 0 ? `<span>🔄 ${m.updateCount} update${m.updateCount > 1 ? 's' : ''}</span>` : ''}
           </div>
@@ -9326,7 +9984,7 @@ async function init() {
       if (name) {
         installModelStream(name);
       } else {
-        showToast('⚠️ Please enter a model name', 'warning');
+        showToast('Please enter a model name', 'warning');
       }
     };
   }
@@ -9340,7 +9998,7 @@ async function init() {
         if (name) {
           installModelStream(name);
         } else {
-          showToast('⚠️ Please enter a model name', 'warning');
+          showToast('Please enter a model name', 'warning');
         }
       }
     });
@@ -9416,27 +10074,32 @@ async function init() {
 
 
   // Settings Tab Switching
+  // 4-tab IA: two of the nav entries show a MERGED pair of legacy panes
+  // (kept as separate divs so their internal wiring stays untouched).
+  const MERGED_TABS = {
+    'chat-generation': ['chat-generation', 'behavior-personality'],
+    'models': ['models', 'model-overrides'],
+  };
   window.switchTab = function (tabName) {
     try {
-      // Update tabs
+      // Update nav highlight — match on the onclick target, not display text
       document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-      const activeTab = Array.from(document.querySelectorAll('.settings-tab')).find(t => {
-        const tabText = t.textContent.trim().toLowerCase();
-        return tabText === tabName || tabText.includes(tabName);
-      });
+      const activeTab = Array.from(document.querySelectorAll('.settings-tab')).find(t =>
+        (t.getAttribute('onclick') || '').includes(`'${tabName}'`));
       if (activeTab) activeTab.classList.add('active');
 
-      // Update pages
+      // Update pages (a merged tab activates both of its panes, stacked)
       document.querySelectorAll('.settings-page').forEach(p => p.classList.remove('active'));
-      const activePage = document.getElementById(`tab-${tabName}`);
-      if (activePage) {
-        activePage.classList.add('active');
-      } else {
-        console.error(`Tab page not found: tab-${tabName}`);
+      const pages = MERGED_TABS[tabName] || [tabName];
+      let found = false;
+      for (const name of pages) {
+        const page = document.getElementById(`tab-${name}`);
+        if (page) { page.classList.add('active'); found = true; }
       }
+      if (!found) console.error(`Tab page not found: tab-${tabName}`);
 
-      // Render model overrides when switching to model overrides tab
-      if (tabName === 'model-overrides' && typeof ui !== 'undefined' && ui.renderModelOverrides) {
+      // Model overrides now live inside the Models tab — render on entry
+      if (pages.includes('model-overrides') && typeof ui !== 'undefined' && ui.renderModelOverrides) {
         ui.renderModelOverrides();
       }
     } catch (error) {

@@ -1221,6 +1221,32 @@ ipcMain.handle('workspace-read', async (_e, relPath) => {
   }
 });
 
+// ---------- Custom-data folder (user-visible JSON mirrors) ----------
+// Memories/skills/projects live in the renderer's storage; these mirrors
+// write them as human-readable JSON on the drive so users can see, edit
+// elsewhere, and back them up — and an IPC opens the folder in Finder/
+// Explorer.
+const CUSTOM_DIR = path.join(APP_DATA_DIR, 'data', 'custom');
+const MIRROR_WHITELIST = new Set(['memories', 'skills', 'projects']);
+
+ipcMain.handle('open-custom-dir', async () => {
+  ensureDir(CUSTOM_DIR);
+  shell.openPath(CUSTOM_DIR);
+  return CUSTOM_DIR;
+});
+
+ipcMain.handle('mirror-custom', async (_e, name, json) => {
+  try {
+    if (!MIRROR_WHITELIST.has(name)) return false;
+    ensureDir(CUSTOM_DIR);
+    fs.writeFileSync(path.join(CUSTOM_DIR, `${name}.json`), JSON.stringify(json, null, 2));
+    return true;
+  } catch (e) {
+    logLine(`[PortableAI] mirror-custom ${name} failed: ${e.message}`);
+    return false;
+  }
+});
+
 // IPC: Cache & Move Install Strategy
 let isCacheMode = false;
 // CRITICAL: use the REAL host temp dir (os.tmpdir), NOT app.getPath('temp') —

@@ -4278,6 +4278,7 @@
                       <div><b>Chat from your phone:</b> scan the code or open <code id="connWebUrl">—</code></div>
                       <div style="margin-top:6px"><b>API / OpenClaw endpoint:</b> <code id="connApiUrl">—</code></div>
                       <div style="margin-top:6px"><b>Workspace folder:</b> <code id="connWorkspace">—</code></div>
+                      <div style="margin-top:6px;color:var(--muted)">Note: phone chats stay on the phone for now — history syncing to the drive is on the roadmap.</div>
                       <button id="copyOpenclawCfg" style="margin-top:10px;background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Copy OpenClaw provider config</button>
                     </div>
                   </div>
@@ -4361,8 +4362,17 @@
                     <button id="skillFormSave" style="background:var(--brand);border:0;color:var(--brand-contrast);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Save skill</button>
                   </div>
                 </div>
-                <button id="skillAddBtn"
-                  style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">+ Add skill</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button id="skillAddBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">+ Add skill</button>
+                  <button id="skillImportBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Import</button>
+                  <button id="skillExportBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Export</button>
+                  <button id="skillOpenFolderBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Open folder</button>
+                  <input type="file" id="skillImportFile" accept="application/json,.json" style="display:none">
+                </div>
               </div>
             </div>
           </div>
@@ -4571,8 +4581,13 @@
               <div class="field">
                 <label>Your data</label>
                 <div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Everything lives on this drive. Take a copy any time.</div>
-                <button id="exportAllBtn"
-                  style="background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12.5px;cursor:pointer">Export all chats (.zip)</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button id="exportAllBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12.5px;cursor:pointer">Export all chats (.zip)</button>
+                  <button id="openDataFolderBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12.5px;cursor:pointer">Open data folder</button>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:8px">Memories, skills, and projects are mirrored as editable JSON in <code>app_data/data/custom/</code> on this drive.</div>
               </div>
             </div>
             <div class="settings-section">
@@ -4705,6 +4720,8 @@
             style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Import</button>
           <button id="memExportBtn"
             style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Export</button>
+          <button id="memOpenFolderBtn"
+            style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Open folder</button>
           <input type="file" id="memImportFile" accept="application/json,.json" style="display:none">
         </div>
         <button id="memClearBtn"
@@ -4924,10 +4941,21 @@ function textPrompt(title, opts = {}) {
 }
 
 /* ---------- Projects (chat grouping + per-project instructions) ---------- */
+// Human-readable JSON mirror on the drive (app_data/data/custom/<name>.json)
+// so users can see/back-up their custom data; opened via the folder buttons.
+function mirrorCustom(name, data) {
+  try {
+    if (window.electron && window.electron.invoke) {
+      window.electron.invoke('mirror-custom', name, data).catch(() => { });
+    }
+  } catch { }
+}
+
 let projects = jget(KEYS.projects) || []; // {id, name, instructions, collapsed, createdAt}
 function saveProjects() {
   jsave(KEYS.projects, projects);
   try { IDBStore.saveKV('projects', projects); } catch { }
+  mirrorCustom('projects', projects);
 }
 function projectById(id) { return projects.find(p => p.id === id) || null; }
 
@@ -4947,6 +4975,7 @@ if (!Array.isArray(skills)) { skills = DEFAULT_SKILLS.map(s => ({ ...s })); jsav
 function saveSkills() {
   jsave(KEYS.skills, skills);
   try { IDBStore.saveKV('skills', skills); } catch { }
+  mirrorCustom('skills', skills);
 }
 
 const _hadStoredSettings = !!jget(KEYS.settings);
@@ -5641,10 +5670,25 @@ async function processImageFile(file) {
   return { id: uid(), thumb, w, h, mime: 'image/jpeg', bytes: blob.size, blob };
 }
 
-// Catalog lookup: true/false when the family is known, null when it isn't.
+// Vision capability is TAG-level, not family-level (gemma3:1b is text-only
+// while gemma3:4b+ has vision) — pattern lists first, catalog as fallback,
+// and a session cache of models that returned HTTP 400 for images.
+const _visionFailed = new Set();
+const VISION_PATTERNS = [
+  /^gemma4/, /^gemma3:(4b|12b|27b)/, /llava/, /vision/, /-vl/, /vl\d*[:$]/,
+  /minicpm-v/, /moondream/, /bakllava/, /pixtral/,
+];
+const TEXT_ONLY_PATTERNS = [
+  /^gemma3:1b/, /^gemma2/, /^llama3\.\d(?!.*vision)/, /^llama2/, /^deepseek-r1/,
+  /^phi/, /^qwen(?![\d.]*-?vl)/, /^mistral(?!.*pixtral)/, /^granite/, /^smollm/,
+  /^tinyllama/, /^codellama/, /^starcoder/,
+];
 function modelIsMultimodal(name) {
   if (!name) return null;
   const lower = name.toLowerCase();
+  if (_visionFailed.has(lower)) return false; // learned from a live 400
+  if (VISION_PATTERNS.some(p => p.test(lower))) return true;
+  if (TEXT_ONLY_PATTERNS.some(p => p.test(lower))) return false;
   const family = lower.split(':')[0];
   const catalog = (typeof MODEL_CATALOG !== 'undefined' && Array.isArray(MODEL_CATALOG)) ? MODEL_CATALOG : [];
   const hit = catalog.find(m => {
@@ -6637,6 +6681,12 @@ const TONE_PROMPTS = {
 
 async function sendPrompt() {
   if (streaming) return;
+  // Cache-mode installs point Ollama at the empty host cache — the user's
+  // models are temporarily invisible, so chatting would 404 confusingly.
+  if (_cacheInstallActive) {
+    showToast('A model is installing — chat resumes automatically when it finishes.', 'info');
+    return;
+  }
   let conv = conversations.find(c => c.id === activeId);
   if (!conv) {
     ensureLock = false;
@@ -7486,8 +7536,11 @@ function buildSystemPrompt(modelName, userMessage = '', chatConv = null) {
       // Get max memories from settings (default 6)
       const maxMem = sysMem.maxMemoriesPerRequest || 6;
 
-      // Get relevant memories based on user message
-      const memories = MemoryStore.getRelevant(userMessage, maxMem);
+      // Get relevant memories based on user message — global memories plus
+      // the ones scoped to this conversation's project (project memory).
+      const projId = chatConv && chatConv.projectId ? chatConv.projectId : null;
+      const memories = MemoryStore.getRelevant(userMessage, maxMem)
+        .filter(m => !m.projectId || m.projectId === projId);
 
       if (memories.length > 0) {
         systemMsg += "\n\nThings you remember about this user:\n";
@@ -7512,13 +7565,18 @@ function buildSystemPrompt(modelName, userMessage = '', chatConv = null) {
   return systemMsg;
 }
 
-async function streamReplyFrom(conv, uIdx) {
+async function streamReplyFrom(conv, uIdx, opts = {}) {
   const model = (conv.model || settings.model || '').trim(); if (!model) return;
 
   const asst = { role: 'assistant', content: '', thinking: '', ts: ts(), meta: {}, model: model };
   conv.messages.push(asst); conv.updatedAt = Date.now(); jsave(KEYS.convs, conversations);
   renderMessages(false); snapToBottom();
   streamingNode = $('.msg.asst:last-of-type .content', ui.messages);
+
+  let sentImages = false;     // did this request carry image payloads?
+  let retryNoImages = false;  // set on HTTP 400 + images → one text-only retry
+  let timedOut = false;       // first-token watchdog fired
+  let gotFirstToken = false;
 
   const controller = new AbortController(); streaming = controller;
   ui.send.style.display = 'none'; ui.stop.style.display = 'grid';
@@ -7546,12 +7604,13 @@ async function streamReplyFrom(conv, uIdx) {
   const convChars = history.reduce((a, m) => a + (m.content || '').length, 0);
   for (const m of history) {
     const entry = { role: m.role, content: m.content };
-    if (m.images) entry.images = m.images; // legacy passthrough
-    if (m.attachments && m.attachments.length) {
+    if (m.images && !opts.noImages) entry.images = m.images; // legacy passthrough
+    if (!opts.noImages && m.attachments && m.attachments.length) {
       const imgs = await hydrateImagesBase64(m.attachments);
       if (imgs) entry.images = imgs;
       else console.warn('[PortableAI] Attachment blob(s) missing for a message — sent text-only.');
     }
+    if (entry.images && entry.images.length) sentImages = true;
     if (m.docs && m.docs.length) {
       // Chunk selection uses the CURRENT question so follow-ups re-pick the
       // relevant sections each turn.
@@ -7569,6 +7628,11 @@ async function streamReplyFrom(conv, uIdx) {
 
   try {
     PromptStateManager.update('loading', { model });
+    // First-token watchdog: a wedged/overloaded server must never leave the
+    // chat on "waiting for response" forever (covers the connect AND stream).
+    var watchdog = setTimeout(() => {
+      if (!gotFirstToken) { timedOut = true; try { controller.abort(); } catch { } }
+    }, 180000);
     const r = await fetch(`${OLLAMA}/api/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal });
     PromptStateManager.update('generating');
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -7608,6 +7672,7 @@ async function streamReplyFrom(conv, uIdx) {
       const { value, done } = await reader.read();
       if (done) break;
 
+      gotFirstToken = true;
       hideLeftLoading();
       buf += dec.decode(value, { stream: true });
 
@@ -7714,16 +7779,29 @@ async function streamReplyFrom(conv, uIdx) {
       PromptStateManager.update('ready');
     }
   } catch (err) {
-    if (!controller.signal.aborted) {
-      let msg = String(err).replace('Error:', '').trim();
+    // HTTP 400 with an image payload = the model can't do vision (learned:
+    // gate it for the rest of the session) → retry once, text only.
+    if (/HTTP 400/.test(String(err)) && sentImages && !opts.noImages) {
+      _visionFailed.add(model.toLowerCase());
+      retryNoImages = true;
+      showToast(`"${model}" couldn't accept the image — answering from the text only. Vision needs a model like Gemma 4.`, 'warning');
+    } else if (!controller.signal.aborted || timedOut) {
+      let msg = timedOut
+        ? 'The model didn\'t respond within 3 minutes — it may still be loading, or an install is hogging the server. Try again in a moment.'
+        : String(err).replace('Error:', '').trim();
       // Categorized errors with a recovery hint each
-      if (msg.includes('Failed to fetch')) {
-        msg = 'Couldn\'t reach Ollama. Retrying connection...';
+      if (timedOut) {
+        PromptStateManager.update('ready');
+      } else if (msg.includes('Failed to fetch')) {
+        msg = _cacheInstallActive
+          ? 'A model is installing — chat comes back when it finishes.'
+          : 'Couldn\'t reach Ollama. Retrying connection...';
         // Trigger immediate reconnection check
-        ui.updateStatusBar(false, 0);
-        PromptStateManager.update('server-disconnected');
+        if (!_cacheInstallActive) { ui.updateStatusBar(false, 0); PromptStateManager.update('server-disconnected'); }
       } else if (/HTTP 404/.test(msg)) {
-        msg = `"${model}" isn't installed — open the Model Store and download it, or pick another model.`;
+        msg = (_cacheInstallActive || SharedInstallState.isAnyDownloading())
+          ? 'A model is installing — your models come back online when it finishes.'
+          : `"${model}" isn't installed — open the Model Store and download it, or pick another model.`;
         PromptStateManager.update('ready');
       } else if (msg.toLowerCase().includes('oom') || msg.toLowerCase().includes('memory')) {
         msg = 'Ran out of memory — switch to a smaller model or lower the context length in Settings.';
@@ -7750,13 +7828,14 @@ async function streamReplyFrom(conv, uIdx) {
         conv.messages.pop();
         streamReplyFrom(conv, uIdx);
       };
-      if (err.name !== 'AbortError') {
+      if (err.name !== 'AbortError' && !timedOut) {
         asst.content += `\n\n**Error**: ${err.message}`;
         renderMessages(false);
         if (pinnedToBottom) snapToBottom();
       }
     }
   } finally {
+    if (typeof watchdog !== 'undefined') clearTimeout(watchdog);
     streaming = null; streamingNode = null; ui.stop.style.display = 'none'; ui.send.style.display = 'grid'; hideLeftLoading();
     // Persist whatever arrived (covers Stop-button aborts and stream errors,
     // where the success path's jsave never runs — partial replies survive reload).
@@ -7764,6 +7843,13 @@ async function streamReplyFrom(conv, uIdx) {
     jsave(KEYS.convs, conversations);
     if (controller && controller.signal && controller.signal.aborted) PromptStateManager.update('ready');
     if (ui.jump && pinnedToBottom) ui.jump.style.display = 'none';
+  }
+
+  // One-shot text-only retry after an image 400 (outside try/finally so the
+  // streaming state above is fully reset first).
+  if (retryNoImages) {
+    if (conv.messages[conv.messages.length - 1] === asst) conv.messages.pop();
+    return streamReplyFrom(conv, uIdx, { noImages: true });
   }
 }
 
@@ -7860,7 +7946,9 @@ User says "what's the weather?" → [{"action":"none"}]
             MemoryStore.addMemory({
               key: item.key || MemoryStore.generateKey(item.text),
               category: item.category || 'general',
-              text: item.text
+              text: item.text,
+              // Facts learned inside a project chat stay scoped to it
+              projectId: (conv && conv.projectId) || null
             });
           } else if (item.action === 'update' && item.text) {
             MemoryStore.updateMemory({
@@ -9984,6 +10072,8 @@ const ModelStore = {
         _cacheInstallActive = false;
         _preCacheModelsList = [];
       }
+      // Rebuild the CHAT model selector too (the store list alone isn't enough)
+      try { await listModels(); } catch { }
 
       // Download complete
       delete this.state.downloading[id];
@@ -10649,6 +10739,10 @@ async function init() {
     else hideSkillMenu();
   });
   if (ui.prompt) ui.prompt.addEventListener('blur', () => setTimeout(hideSkillMenu, 150));
+  if (ui.prompt) ui.prompt.addEventListener('focus', () => {
+    const v = ui.prompt.value;
+    if (v.startsWith('/') && !v.includes('\n')) showSkillMenu(v.slice(1).split(' ')[0]);
+  });
 
   // --- Vision chat ingest: attach button, paste, window drag-drop ---
   const attachBtn = document.getElementById('attachBtn');
@@ -10729,11 +10823,12 @@ async function init() {
 
     save() {
       jsave(KEYS.memory, this.items);
+      mirrorCustom('memories', this.items);
     },
 
-    // NEW: Add memory with full schema
+    // NEW: Add memory with full schema (projectId scopes it to a project)
     addMemory(data) {
-      const { key, category, text } = data;
+      const { key, category, text, projectId } = data;
 
       // Check for exact duplicate text
       if (this.items.some(i => i.text === text)) {
@@ -10746,6 +10841,7 @@ async function init() {
         key: key || this.generateKey(text),
         category: category || 'general',
         text: text,
+        projectId: projectId || null,
         createdAt: ts(),
         updatedAt: ts(),
         updateCount: 0
@@ -11168,10 +11264,11 @@ async function init() {
       <div id="mem-${m.id}" style="display:flex;justify-content:space-between;align-items:start;background:var(--panel2);padding:8px;border-radius:4px;margin-bottom:6px">
         <div style="flex:1;margin-right:8px">
           <div class="mem-text"style="margin-bottom:4px;line-height:1.4">${escapeHtml(m.text)}</div>
-          <div style="font-size:10px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap">
-            <span>${icon('folder')} ${escapeHtml(m.category || 'general')}</span>
-            <span>📅 ${new Date(m.createdAt).toLocaleDateString()}</span>
-            ${m.updateCount > 0 ? `<span>🔄 ${m.updateCount} update${m.updateCount > 1 ? 's' : ''}</span>` : ''}
+          <div style="font-size:10px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span>${icon('folder', 11)} ${escapeHtml(m.category || 'general')}</span>
+            <span>${icon('clock', 11)} ${new Date(m.createdAt).toLocaleDateString()}</span>
+            ${m.updateCount > 0 ? `<span>${m.updateCount} update${m.updateCount > 1 ? 's' : ''}</span>` : ''}
+            ${m.projectId && projectById(m.projectId) ? `<span style="background:color-mix(in srgb, var(--brand) 18%, transparent);color:var(--brand);border-radius:999px;padding:1px 8px;font-weight:600">${escapeHtml(projectById(m.projectId).name)}</span>` : ''}
           </div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
@@ -11283,6 +11380,12 @@ async function init() {
         a.href = url; a.download = 'portableai-memories.json'; a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       };
+      const memOpenFolderBtn = document.getElementById('memOpenFolderBtn');
+      if (memOpenFolderBtn) {
+        if (window.electron && window.electron.invoke) {
+          memOpenFolderBtn.onclick = () => window.electron.invoke('open-custom-dir').catch(() => { });
+        } else memOpenFolderBtn.style.display = 'none';
+      }
       const memImportBtn = document.getElementById('memImportBtn');
       const memImportFile = document.getElementById('memImportFile');
       if (memImportBtn && memImportFile) {
@@ -11379,9 +11482,61 @@ async function init() {
         connToggle.disabled = true; // browser fallback: no main process
       }
 
-      // Export-all + update check
+      // Export-all + update check + data folder
       const exportAllBtn = document.getElementById('exportAllBtn');
       if (exportAllBtn) exportAllBtn.onclick = exportAllChats;
+      const openDataFolderBtn = document.getElementById('openDataFolderBtn');
+      if (openDataFolderBtn) {
+        if (window.electron && window.electron.invoke) {
+          openDataFolderBtn.onclick = () => window.electron.invoke('open-custom-dir').catch(() => { });
+        } else openDataFolderBtn.style.display = 'none';
+      }
+      // Skills import/export/folder
+      const skillOpenFolderBtn = document.getElementById('skillOpenFolderBtn');
+      if (skillOpenFolderBtn) {
+        if (window.electron && window.electron.invoke) {
+          skillOpenFolderBtn.onclick = () => window.electron.invoke('open-custom-dir').catch(() => { });
+        } else skillOpenFolderBtn.style.display = 'none';
+      }
+      const skillExportBtn = document.getElementById('skillExportBtn');
+      if (skillExportBtn) skillExportBtn.onclick = () => {
+        const blob = new Blob([JSON.stringify({ portableai_skills: 1, items: skills }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'portableai-skills.json'; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
+      const skillImportBtn = document.getElementById('skillImportBtn');
+      const skillImportFile = document.getElementById('skillImportFile');
+      if (skillImportBtn && skillImportFile) {
+        skillImportBtn.onclick = () => skillImportFile.click();
+        skillImportFile.onchange = async () => {
+          const f = skillImportFile.files && skillImportFile.files[0];
+          skillImportFile.value = '';
+          if (!f) return;
+          try {
+            const parsed = JSON.parse(await f.text());
+            const items = Array.isArray(parsed) ? parsed : (parsed.items || []);
+            let added = 0, updated = 0, skipped = 0;
+            for (const it of items) {
+              if (!it || typeof it.template !== 'string' || !it.template.trim() || !it.name) { skipped++; continue; }
+              const name = String(it.name).toLowerCase().replace(/\s+/g, '-').replace(/^\//, '');
+              const existing = skills.find(s => s.name === name);
+              if (existing) {
+                if (existing.template !== it.template) { existing.template = it.template; existing.description = it.description || existing.description; updated++; }
+                else skipped++;
+              } else {
+                skills.push({ id: uid(), name, description: it.description || '', template: it.template });
+                added++;
+              }
+            }
+            saveSkills(); renderSkillList();
+            showToast(`Skills imported: ${added} added, ${updated} updated, ${skipped} skipped.`, 'success');
+          } catch (e) {
+            showToast('Import failed — the file is not valid skills JSON.', 'error');
+          }
+        };
+      }
       const updBtn = document.getElementById('checkUpdatesBtn');
       if (updBtn) updBtn.onclick = async () => {
         const out = document.getElementById('updateResult');

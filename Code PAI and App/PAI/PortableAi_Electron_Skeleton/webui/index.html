@@ -10579,7 +10579,14 @@ async function init() {
   const ver = document.createElement('div');
   ver.id = 'appVersionString';
   ver.style.cssText = 'position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:10px;opacity:0.5;pointer-events:none;z-index:99;color:var(--text);white-space:nowrap;';
-  ver.textContent = `PortableAI v1.0.0 • ${new Date().toLocaleDateString()}`;
+  // Real version comes from the main process (was hardcoded "v1.0.0" and
+  // never updated); browser fallback has no IPC, so it shows no number.
+  ver.textContent = `PortableAI • ${new Date().toLocaleDateString()}`;
+  if (window.electron?.invoke) {
+    window.electron.invoke('get-system-info').then(info => {
+      if (info?.appVersion) ver.textContent = `PortableAI v${info.appVersion} • ${new Date().toLocaleDateString()}`;
+    }).catch(() => { });
+  }
 
   const settingsModal = document.getElementById('settingsModal');
   if (settingsModal) {

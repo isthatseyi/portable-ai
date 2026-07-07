@@ -802,7 +802,8 @@ ipcMain.handle('get-system-info', () => {
   return {
     totalRAM: Math.round(os.totalmem() / (1024 ** 3)),
     platform: process.platform,
-    arch: process.arch
+    arch: process.arch,
+    appVersion: app.getVersion()
   };
 });
 

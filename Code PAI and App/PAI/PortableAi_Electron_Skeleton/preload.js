@@ -30,7 +30,8 @@ const ALLOWED_CHANNELS = [
   'open-models-dir', 'get-config', 'pick-models-dir', 'set-models-dir',
   'restart-ollama', 'prepare-cache-install', 'finish-cache-install',
   'pick-migration-dir', 'execute-migration', 'get-system-info', 'get-drive-space',
-  'get-model-catalog', 'refresh-model-catalog'
+  'get-model-catalog', 'refresh-model-catalog', 'check-updates',
+  'connector-mode', 'get-lan-info', 'workspace-list', 'workspace-read'
 ];
 
 const ALLOWED_EVENT_CHANNELS = ['cache-move-progress', 'migration-progress'];

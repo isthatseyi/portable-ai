@@ -97,3 +97,26 @@ newline-delimited JSON — split on `\n` and parse each line.
 - Note: the Electron app starts Ollama with a RESTRICTED `OLLAMA_ORIGINS` list
   (file://, app://, localhost) — the `OLLAMA_ORIGINS=*` mention above applies to the
   browser-fallback launchers only.
+
+## Changes (July 2026 — v1.2 gate round 2)
+
+- `prepare-cache-install` now takes `{expectedBytes}` and returns
+  `{mode:'cache', cacheDir}` or `{mode:'direct-fallback', reason}` when the
+  HOST temp volume lacks ~1.2× the model size. CACHE_DIR is now based on
+  `os.tmpdir()` (the true host disk) — `app.getPath('temp')` is relocated to
+  the stick and silently defeated cache mode.
+- Added `check-updates` → main fetches the GitHub releases API (pinned
+  domain, 10s timeout) and returns `{current, latest, url, name}`. Only on
+  explicit user click (Settings → General), never automatic.
+- Added connector mode (explicit opt-in, persisted as `connectorMode` in
+  `config/settings.json`... note: stored in CONFIG_FILE `portable-settings.json`):
+  - `connector-mode` `{enable}` → rebinds Ollama (`0.0.0.0` + `OLLAMA_ORIGINS=*`
+    while enabled; strictly loopback + restricted origins otherwise), starts/stops
+    the phone web-UI server on `0.0.0.0:11500` (serves `webui/index.html` with the
+    Ollama port injected + `webui/vendor/*` only), ensures `<root>/workspace/`.
+    Returns `connectorInfo()`.
+  - `get-lan-info` → `{enabled, lanIp, ollamaPort, webPort, workspace}`.
+  - `workspace-list` → flat file list under `<root>/workspace/` (≤3 levels,
+    ≤500 entries, dotfiles skipped): `[{path, size, mtime}]`.
+  - `workspace-read` `relPath` → `{text, size}` (≤1 MB) or `{tooBig, size}`;
+    path-traversal guarded. Read-only — no write channel exists.

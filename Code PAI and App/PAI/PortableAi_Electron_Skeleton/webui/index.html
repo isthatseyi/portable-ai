@@ -302,7 +302,7 @@
 
     .chatItem {
       display: grid;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: 1fr auto auto auto;
       gap: 8px;
       align-items: center;
       padding: 10px 12px;
@@ -359,6 +359,104 @@
       opacity: 0.75;
       padding: 12px 12px 4px;
       user-select: none;
+    }
+
+    /* Projects section in the sidebar */
+    .projRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .projNew {
+      cursor: pointer;
+      padding: 0 6px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .projNew:hover {
+      color: var(--brand);
+      background: var(--panel2);
+    }
+
+    .projHeader {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    .projHeader:hover {
+      background: var(--chip);
+    }
+
+    .projCaret {
+      font-size: 10px;
+      color: var(--muted);
+      width: 12px;
+    }
+
+    .projName {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .projCount {
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--panel2);
+      border-radius: 999px;
+      padding: 1px 7px;
+    }
+
+    .projAdd,
+    .projDel {
+      color: var(--muted);
+      padding: 0 4px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    .projHeader:hover .projAdd,
+    .projHeader:hover .projDel {
+      opacity: 1;
+    }
+
+    .projAdd:hover { color: var(--brand); }
+    .projDel:hover { color: var(--danger); }
+
+    .chatProj {
+      justify-self: end;
+      color: var(--muted);
+      padding: 2px 4px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: 4px;
+      line-height: 0;
+    }
+
+    .chatProj:hover {
+      color: var(--brand);
+      background: var(--panel2);
+    }
+
+    .chatItem:hover .chatProj {
+      opacity: 1;
+    }
+
+    .app.collapsed .chatProj {
+      display: none;
     }
 
     /* Search-hit snippet under the title */
@@ -1009,6 +1107,83 @@
 
     html[data-theme="light"] .codeblock {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Context usage meter above the composer */
+    #ctxMeter {
+      max-width: 900px;
+      margin: 0 auto 4px;
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+      opacity: 0.8;
+      cursor: default;
+    }
+
+    #ctxMeter.ctx-amber {
+      color: #f59e0b;
+      opacity: 1;
+    }
+
+    #ctxMeter.ctx-red {
+      color: var(--danger);
+      font-weight: 600;
+      opacity: 1;
+    }
+
+    /* Inline no-model hero on the welcome screen */
+    .welcome-hero {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: min(560px, 100%);
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      background: color-mix(in srgb, var(--brand) 8%, var(--panel2));
+      border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--border));
+      border-radius: 12px;
+      text-align: left;
+    }
+
+    .wh-icon {
+      color: var(--brand);
+      line-height: 0;
+      flex: none;
+    }
+
+    .wh-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .wh-title {
+      font-size: 13.5px;
+      font-weight: 650;
+    }
+
+    .wh-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .wh-btn {
+      flex: none;
+      background: var(--brand);
+      color: var(--brand-contrast);
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .wh-btn:hover {
+      background: var(--brand-hover);
     }
 
     /* Welcome screen (empty active chat) */
@@ -3486,6 +3661,30 @@
       font-weight: 600;
     }
 
+    /* Attached-document chips in bubbles + composer strip */
+    .msg-docs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .msg-doc {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+
+    .doc-chip .doc-chip-icon {
+      color: var(--brand);
+      line-height: 0;
+      padding: 0 4px;
+    }
+
     /* Image thumbs inside user bubbles */
     .msg-thumbs {
       display: flex;
@@ -3792,6 +3991,13 @@
           </svg>
           <span class="btn-text">Settings & Models</span>
         </button>
+        <button class="sb-item" id="openWorkspace"
+          style="width:100%; justify-content:center; font-size:12px; padding:8px; display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          <span class="btn-text">Workspace</span>
+        </button>
       </div>
     </aside>
 
@@ -3885,11 +4091,13 @@
       <div id="composer">
         <!-- Pending image attachment (vision chat) -->
         <div id="attachStrip" style="display:none"></div>
+        <!-- Estimated context usage (fills in once a chat has messages) -->
+        <div id="ctxMeter" style="display:none"></div>
         <div id="inputRow">
           <button id="attachBtn" title="Attach an image">
             <svg class="ui-icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
-          <input type="file" id="attachInput" accept="image/*" style="display:none">
+          <input type="file" id="attachInput" accept="image/*,.pdf,.txt,.md,.markdown,.log,.csv,.json,.yaml,.yml,.xml,.html,.css,.js,.ts,.py,.rb,.go,.rs,.java,.c,.h,.cpp,.cs,.php,.sh,.sql" style="display:none">
           <textarea id="prompt"
             placeholder="Message PortableAi… (Enter to send, Shift+Enter for a new line)"></textarea>
 
@@ -4050,6 +4258,45 @@
                   from the new location to permanently switch.</div>
               </div>
             </div>
+
+            <!-- Connectors: OpenClaw / LAN / phone access (explicit opt-in) -->
+            <div class="settings-section" style="margin-top:24px">
+              <div class="field">
+                <label>Connectors <span class="hint" title="Lets other devices and agent runtimes (like OpenClaw) use this drive's AI over your local network. Off = strictly this computer only."><svg class="ui-icon" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin:6px 0 4px">
+                  <div class="switch">
+                    <input type="checkbox" id="connectorToggle">
+                    <span class="slider"></span>
+                  </div>
+                  <span>Allow local-network connections (OpenClaw, phone, API)</span>
+                </label>
+                <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">While enabled, devices on your Wi-Fi can chat with this AI and reach its API. It never touches the internet — but turn it off on networks you don't trust.</div>
+                <div id="connectorCard" style="display:none;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--panel2)">
+                  <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
+                    <div id="connectorQr" style="flex:none;background:#fff;padding:8px;border-radius:8px"></div>
+                    <div style="flex:1;min-width:220px;font-size:12.5px;line-height:1.7">
+                      <div><b>Chat from your phone:</b> scan the code or open <code id="connWebUrl">—</code></div>
+                      <div style="margin-top:6px"><b>API / OpenClaw endpoint:</b> <code id="connApiUrl">—</code></div>
+                      <div style="margin-top:6px"><b>Workspace folder:</b> <code id="connWorkspace">—</code></div>
+                      <button id="copyOpenclawCfg" style="margin-top:10px;background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Copy OpenClaw provider config</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Updates (explicit opt-in network, one click = one request) -->
+            <div class="settings-section" style="margin-top:24px">
+              <div class="field">
+                <label>Updates</label>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Checks GitHub for a newer release — only when you click, never automatically.</div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <button id="checkUpdatesBtn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12.5px;cursor:pointer">Check for updates</button>
+                  <span id="updateResult" style="font-size:12.5px;color:var(--muted)"></span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- CHAT & GENERATION TAB -->
@@ -4090,6 +4337,32 @@
                     <option value="16384">16384 tokens (very large)</option>
                   </select>
                 </div>
+              </div>
+            </div>
+
+            <!-- Skills: slash-command prompt templates -->
+            <div class="settings-section" style="margin-top:24px">
+              <div class="field">
+                <label>Skills</label>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Reusable prompt templates — type <b>/</b> in the message box to use one. <code>{{input}}</code> marks where your text goes.</div>
+                <div id="skillList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+                <div id="skillForm" style="display:none;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);margin-bottom:10px">
+                  <input type="hidden" id="skillFormId">
+                  <div style="display:flex;gap:8px;margin-bottom:8px">
+                    <input type="text" id="skillFormName" placeholder="name (no spaces, e.g. cover-letter)"
+                      style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit">
+                    <input type="text" id="skillFormDesc" placeholder="short description"
+                      style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit">
+                  </div>
+                  <textarea id="skillFormTemplate" rows="3" placeholder="Prompt template — use {{input}} for the user's text"
+                    style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+                  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+                    <button id="skillFormCancel" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Cancel</button>
+                    <button id="skillFormSave" style="background:var(--brand);border:0;color:var(--brand-contrast);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Save skill</button>
+                  </div>
+                </div>
+                <button id="skillAddBtn"
+                  style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">+ Add skill</button>
               </div>
             </div>
           </div>
@@ -4293,7 +4566,15 @@
 
           <!-- MEMORY TAB -->
           <div id="tab-memory" class="settings-page">
-            <h3 style="margin:0 0 20px 0">Memory</h3>
+            <h3 style="margin:0 0 20px 0">Data & Memory</h3>
+            <div class="settings-section" style="margin-bottom:20px">
+              <div class="field">
+                <label>Your data</label>
+                <div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Everything lives on this drive. Take a copy any time.</div>
+                <button id="exportAllBtn"
+                  style="background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12.5px;cursor:pointer">Export all chats (.zip)</button>
+              </div>
+            </div>
             <div class="settings-section">
               <div style="font-size:12px;color:var(--muted);margin-bottom:12px">PortableAi can learn facts about you
                 from conversations.</div>
@@ -4395,7 +4676,37 @@
         id="memoryListContainer">
         <!-- Items go here -->
       </div>
-      <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:12px">
+      <!-- Inline add-memory form (hidden until + Add) -->
+      <div id="memAddForm" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--panel2)">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="memAddKey" placeholder="Key (e.g. favorite_language)"
+            style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit">
+          <select id="memAddCategory"
+            style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit">
+            <option value="personal">Personal</option>
+            <option value="preference">Preference</option>
+            <option value="work">Work</option>
+            <option value="other" selected>Other</option>
+          </select>
+        </div>
+        <textarea id="memAddText" rows="2" placeholder="The fact to remember, e.g. 'Prefers concise answers with code examples.'"
+          style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button id="memAddCancel" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Cancel</button>
+          <button id="memAddSave" style="background:var(--brand);border:0;color:var(--brand-contrast);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Save memory</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;justify-content:space-between;gap:12px;align-items:center">
+        <div style="display:flex;gap:8px">
+          <button id="memAddBtn"
+            style="background:var(--brand);border:0;color:var(--brand-contrast);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">+ Add memory</button>
+          <button id="memImportBtn"
+            style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Import</button>
+          <button id="memExportBtn"
+            style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Export</button>
+          <input type="file" id="memImportFile" accept="application/json,.json" style="display:none">
+        </div>
         <button id="memClearBtn"
           style="background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Clear
           All Memory</button>
@@ -4465,6 +4776,8 @@
 
 
   <!-- app.js inlined below (fully self-contained, zero external scripts) -->
+  <!-- Locally-vendored QR encoder (connector mode phone access) — offline, no CDN -->
+  <script src="vendor/qrcode.min.js"></script>
   <script>
 /* PortableAi WebUI — app.js
    Copyright (C) 2024-2026 Sammuel Oluwaseyi Johnson
@@ -4499,15 +4812,21 @@ function getOllamaPort() {
   return 11434;
 }
 
+// When served over the LAN (phone access in connector mode) talk to the
+// Ollama on the SERVING machine, not the phone's own localhost.
+const OLLAMA_HOST_BASE = (location.protocol.startsWith('http') &&
+  !['localhost', '127.0.0.1', ''].includes(location.hostname))
+  ? location.hostname : '127.0.0.1';
+
 let OLLAMA_PORT = getOllamaPort();
-let OLLAMA = `http://127.0.0.1:${OLLAMA_PORT}`;
-let BRIDGE = `http://127.0.0.1:${OLLAMA_PORT}/quit`;
+let OLLAMA = `http://${OLLAMA_HOST_BASE}:${OLLAMA_PORT}`;
+let BRIDGE = `http://${OLLAMA_HOST_BASE}:${OLLAMA_PORT}/quit`;
 
 function setOllamaPort(p) {
   if (!p || p === OLLAMA_PORT) return;
   OLLAMA_PORT = p;
-  OLLAMA = `http://127.0.0.1:${OLLAMA_PORT}`;
-  BRIDGE = `http://127.0.0.1:${OLLAMA_PORT}/quit`;
+  OLLAMA = `http://${OLLAMA_HOST_BASE}:${OLLAMA_PORT}`;
+  BRIDGE = `http://${OLLAMA_HOST_BASE}:${OLLAMA_PORT}/quit`;
   const el = document.getElementById('statusPort');
   if (el) el.textContent = ':' + OLLAMA_PORT;
 }
@@ -4559,7 +4878,7 @@ window.onerror = function (msg, url, line, col, error) {
   return false;
 };
 
-const KEYS = { convs: 'pa_conversations_v25', active: 'pa_active_v25', settings: 'pa_settings_v25', memory: 'pa_memory_v1' };
+const KEYS = { convs: 'pa_conversations_v25', active: 'pa_active_v25', settings: 'pa_settings_v25', memory: 'pa_memory_v1', projects: 'pa_projects_v1', skills: 'pa_skills_v1' };
 const STORAGE_BASE_BYTES = Math.round(784.5 * 1024 * 1024); // 784.5MB base
 
 /* ---------- DOM helpers ---------- */
@@ -4569,6 +4888,33 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 /* ---------- State ---------- */
 let conversations = jget(KEYS.convs) || [];
 let activeId = jget(KEYS.active) || null;
+
+/* ---------- Projects (chat grouping + per-project instructions) ---------- */
+let projects = jget(KEYS.projects) || []; // {id, name, instructions, collapsed, createdAt}
+function saveProjects() {
+  jsave(KEYS.projects, projects);
+  try { IDBStore.saveKV('projects', projects); } catch { }
+}
+function projectById(id) { return projects.find(p => p.id === id) || null; }
+
+/* ---------- Skills (slash-command prompt templates) ---------- */
+const DEFAULT_SKILLS = [
+  { id: 'summarize', name: 'summarize', description: 'Key points + one-line takeaway', template: 'Summarize the following into key bullet points, then a one-line takeaway:\n\n{{input}}' },
+  { id: 'translate', name: 'translate', description: 'Translate (auto → English)', template: 'Translate the following to English. If it is already English, translate it to Spanish. Preserve the tone:\n\n{{input}}' },
+  { id: 'explain-code', name: 'explain-code', description: 'Walk through code + spot bugs', template: 'Explain what this code does, step by step, then note any bugs or improvements:\n\n{{input}}' },
+  { id: 'improve', name: 'improve', description: 'Rewrite clearer & tighter', template: 'Rewrite the following to be clearer and more concise while keeping the meaning and tone:\n\n{{input}}' },
+  { id: 'brainstorm', name: 'brainstorm', description: '10 creative ideas', template: 'Brainstorm 10 creative, distinct ideas for: {{input}}' },
+  { id: 'meeting-notes', name: 'meeting-notes', description: 'Raw notes → minutes + actions', template: 'Turn these raw notes into structured meeting minutes with decisions and action items:\n\n{{input}}' },
+  { id: 'regex', name: 'regex', description: 'Build + explain a regex', template: 'Write a regex for: {{input}}\n\nExplain each part briefly and give 3 matching and 2 non-matching examples.' },
+  { id: 'eli5', name: 'eli5', description: 'Explain like I’m five', template: "Explain like I'm five: {{input}}" },
+];
+let skills = jget(KEYS.skills);
+if (!Array.isArray(skills)) { skills = DEFAULT_SKILLS.map(s => ({ ...s })); jsave(KEYS.skills, skills); }
+function saveSkills() {
+  jsave(KEYS.skills, skills);
+  try { IDBStore.saveKV('skills', skills); } catch { }
+}
+
 const _hadStoredSettings = !!jget(KEYS.settings);
 let settings = Object.assign({
   // First run follows the OS appearance; the user can change it any time.
@@ -4583,7 +4929,7 @@ let settings = Object.assign({
   behaviorScope: 'all',   // 'all' | 'model'
   behaviorModel: '',
   temperature: 0.6,
-  contextLength: 4096,
+  contextLength: 'auto', // resolved per model at request time (resolveContextLength)
   installMode: 'cache', // 'cache' (download to main disk, move after) or 'direct' (download straight to external)
   personalization: {}
 }, jget(KEYS.settings) || {});
@@ -4764,7 +5110,8 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const IDBStore = {
   DB_NAME: 'portable_ai',
   // v2 adds the additive `images` store (vision-chat attachment blobs).
-  DB_VERSION: 2,
+  // v3 adds the additive `docs` store (document-chat text, one row per doc).
+  DB_VERSION: 3,
   _db: null,
   _saveTimer: null,
   _pending: null,
@@ -4790,6 +5137,10 @@ const IDBStore = {
         // debounced clear+re-put autosave never rewrites megabytes on exFAT.
         if (!db.objectStoreNames.contains('images')) {
           db.createObjectStore('images', { keyPath: 'id' });
+        }
+        // v3: document-chat text, same write-once pattern as images.
+        if (!db.objectStoreNames.contains('docs')) {
+          db.createObjectStore('docs', { keyPath: 'id' });
         }
       };
       req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
@@ -4904,19 +5255,67 @@ const IDBStore = {
     });
   },
 
+  /* ----- document-chat text (v3 store) ----- */
+  async putDoc(id, doc) {
+    const os = await this._tx('docs', 'readwrite');
+    if (!os) return false;
+    return new Promise((resolve) => {
+      try {
+        const r = os.put({ id, ...doc });
+        r.onsuccess = () => resolve(true);
+        r.onerror = () => resolve(false);
+      } catch { resolve(false); }
+    });
+  },
+
+  async getDoc(id) {
+    const os = await this._tx('docs', 'readonly');
+    if (!os) return null;
+    return new Promise((resolve) => {
+      const r = os.get(id);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => resolve(null);
+    });
+  },
+
+  async deleteDocs(ids) {
+    if (!ids || !ids.length) return;
+    const os = await this._tx('docs', 'readwrite');
+    if (!os) return;
+    for (const id of ids) { try { os.delete(id); } catch { } }
+  },
+
+  async listDocIds() {
+    const os = await this._tx('docs', 'readonly');
+    if (!os) return [];
+    return new Promise((resolve) => {
+      const r = os.getAllKeys();
+      r.onsuccess = () => resolve(r.result || []);
+      r.onerror = () => resolve([]);
+    });
+  },
+
   // Drop blobs no message references anymore (deleted chats, failed sends).
-  // Runs once at startup, after hydrate.
+  // Runs once at startup, after hydrate. Covers images AND docs.
   async gcImages(convs) {
     try {
-      const referenced = new Set();
+      const refImgs = new Set(), refDocs = new Set();
       for (const c of (convs || []))
-        for (const m of (c.messages || []))
-          for (const a of (m.attachments || [])) referenced.add(a.id);
+        for (const m of (c.messages || [])) {
+          for (const a of (m.attachments || [])) refImgs.add(a.id);
+          for (const d of (m.docs || [])) refDocs.add(d.id);
+        }
       const ids = await this.listImageIds();
-      const orphans = ids.filter(id => !referenced.has(id));
+      const orphans = ids.filter(id => !refImgs.has(id));
       if (orphans.length) {
         await this.deleteImages(orphans);
         console.log(`[PortableAI] Image GC: removed ${orphans.length} orphan blob(s).`);
+      }
+      const docIds = await this.listDocIds();
+      const docOrphans = docIds.filter(id => !refDocs.has(id));
+      if (docOrphans.length) {
+        await this.deleteDocs(docOrphans);
+        console.log(`[PortableAI] Doc GC: removed ${docOrphans.length} orphan doc(s).`);
       }
     } catch { }
   },
@@ -5078,6 +5477,9 @@ async function generateAutoTitleLLM(conv) {
     const r = await fetch(`${OLLAMA}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // 15s cap: a wedged model must never hang the naming step forever —
+      // on timeout the chat simply stays "New chat".
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         model: model,
         prompt: prompt,
@@ -5223,6 +5625,60 @@ function activeModelName() {
   return ((conv && conv.model) || settings.model || '').trim();
 }
 
+// Per-model context window from the catalog; conservative 8K for unknowns.
+function modelMaxCtx(name) {
+  if (!name || typeof MODEL_CATALOG === 'undefined') return 8192;
+  const lower = name.toLowerCase();
+  const family = lower.split(':')[0];
+  const hit = MODEL_CATALOG.find(m => {
+    const id = (m.id || '').toLowerCase();
+    return id === lower || id.split(':')[0] === family;
+  });
+  return (hit && hit.maxCtx) || 8192;
+}
+
+// The num_ctx actually sent: 'auto' = min(8192, model max) to protect 8GB
+// machines (KV cache grows with context); numeric picks are capped at the
+// model's real window so users can't silently exceed it.
+function resolveContextLength(model) {
+  const max = modelMaxCtx(model);
+  const v = settings.contextLength;
+  if (!v || v === 'auto') return Math.min(8192, max);
+  return Math.min(parseInt(v, 10) || 4096, max);
+}
+
+// Estimated tokens vs the context window, shown by the composer. chars/4 is
+// the cold estimate; once a reply lands we calibrate with the REAL
+// prompt_eval_count Ollama reported for the tokens it just processed.
+function updateContextMeter() {
+  const el = document.getElementById('ctxMeter');
+  if (!el) return;
+  const conv = conversations.find(c => c.id === activeId);
+  if (!conv || !conv.messages || conv.messages.length === 0) { el.style.display = 'none'; return; }
+  const limit = resolveContextLength(activeModelName());
+  let chars = 0;
+  const docBudget = resolveContextLength(activeModelName()) * 4 * 0.6;
+  for (const m of conv.messages) {
+    chars += (m.content || '').length;
+    // Documents inject up to ~60% of the budget at request time
+    for (const d of (m.docs || [])) chars += Math.min(d.chars || 0, docBudget);
+  }
+  let est;
+  if (conv.lastPromptTokens && conv.lastPromptChars) {
+    est = Math.round(chars * (conv.lastPromptTokens / Math.max(1, conv.lastPromptChars)));
+  } else {
+    est = Math.round(chars / 4) + 300; // + system-prompt ballpark
+  }
+  const pct = est / limit;
+  const fmt = (n) => n >= 1000 ? ((n / 1000).toFixed(1).replace(/\.0$/, '') + 'K') : String(n);
+  el.textContent = `~${fmt(est)} / ${fmt(limit)} tokens`;
+  el.className = pct > 0.9 ? 'ctx-red' : pct > 0.75 ? 'ctx-amber' : '';
+  el.title = pct > 0.75
+    ? 'Close to the context limit — older messages may be dropped. Raise context length in Settings or start a new chat.'
+    : 'Estimated conversation size vs the model’s context window';
+  el.style.display = 'block';
+}
+
 // Gate for attaching/sending images with the current model.
 function visionGate() {
   const model = activeModelName();
@@ -5254,7 +5710,7 @@ async function addAttachment(file) {
 function renderAttachStrip() {
   const strip = document.getElementById('attachStrip');
   if (!strip) return;
-  if (!pendingAttachments.length) {
+  if (!pendingAttachments.length && !pendingDocs.length) {
     strip.style.display = 'none';
     strip.innerHTML = '';
     return;
@@ -5265,6 +5721,11 @@ function renderAttachStrip() {
       <img src="${a.thumb}" alt="attachment preview">
       <span class="attach-meta">${a.w}×${a.h} · ${Math.max(1, Math.round(a.bytes / 1024))} KB</span>
       <button class="attach-x" onclick="removeAttachment(${i})" title="Remove">×</button>
+    </div>`).join('') + pendingDocs.map((d, i) => `
+    <div class="attach-chip doc-chip">
+      <span class="doc-chip-icon">${icon('folder', 18)}</span>
+      <span class="attach-meta" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.name)}<br>${Math.max(1, Math.round(d.chars / 1000))}K chars · ${d.chunkCount} section${d.chunkCount === 1 ? '' : 's'}</span>
+      <button class="attach-x" onclick="removeDocument(${i})" title="Remove">×</button>
     </div>`).join('');
 }
 
@@ -5273,6 +5734,138 @@ function removeAttachment(i) {
   renderAttachStrip();
 }
 window.removeAttachment = removeAttachment;
+
+/* ---------- Document chat (RAG-lite) ---------- */
+// Drop a .txt/.md/code/.pdf file → chat about it, fully offline. Text is
+// stored once in the IDB `docs` store; messages carry only metadata. At
+// request time the doc is injected whole when it fits the context budget,
+// else split into ~6K-char chunks and the best-scoring chunks for the
+// CURRENT question are injected (keyword overlap — no embeddings needed).
+const DOC_EXTS = ['txt', 'md', 'markdown', 'log', 'csv', 'json', 'yaml', 'yml', 'xml', 'html', 'css', 'js', 'ts', 'jsx', 'tsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'h', 'cpp', 'cs', 'php', 'sh', 'sql', 'toml', 'ini', 'conf'];
+const MAX_DOC_FILE = 20 * 1024 * 1024;  // 20 MB source file cap
+const MAX_DOC_CHARS = 2 * 1024 * 1024;  // 2M chars stored cap
+const DOC_CHUNK_CHARS = 6000;           // ~1.5K tokens per chunk
+let pendingDocs = [];                    // staged for the next send
+const MAX_DOCS = 1;
+
+function isDocFile(file) {
+  const ext = (file.name || '').split('.').pop().toLowerCase();
+  return ext === 'pdf' || DOC_EXTS.includes(ext) || /^text\//.test(file.type);
+}
+
+async function extractPdfText(file) {
+  // Locally-vendored pdf.js (webui/vendor/) — offline, no CDN.
+  const pdfjs = await import('./vendor/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.mjs';
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  let out = '';
+  for (let p = 1; p <= doc.numPages && out.length < MAX_DOC_CHARS; p++) {
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    out += content.items.map(i => i.str).join(' ') + '\n\n';
+  }
+  try { doc.destroy(); } catch { }
+  return out;
+}
+
+async function addDocument(file) {
+  if (pendingDocs.length >= MAX_DOCS) {
+    showToast('One document per message for now — remove the current one first.', 'info');
+    return;
+  }
+  if (file.size > MAX_DOC_FILE) {
+    showToast('Document is larger than 20 MB — please split it first.', 'warning');
+    return;
+  }
+  showToast(`Reading "${file.name}"…`, 'info');
+  let text = '';
+  try {
+    const ext = (file.name || '').split('.').pop().toLowerCase();
+    text = ext === 'pdf' ? await extractPdfText(file) : await file.text();
+  } catch (e) {
+    console.error('doc read failed', e);
+    showToast(`Couldn't read "${file.name}" — the format may be unsupported.`, 'error');
+    return;
+  }
+  text = String(text || '').slice(0, MAX_DOC_CHARS);
+  if (!text.trim()) {
+    showToast(`"${file.name}" contains no readable text${file.name.endsWith('.pdf') ? ' (scanned PDFs need OCR, which is not supported yet)' : ''}.`, 'warning');
+    return;
+  }
+  pendingDocs.push({
+    id: uid(),
+    name: (file.name || 'document').slice(0, 80),
+    size: file.size,
+    chars: text.length,
+    chunkCount: Math.ceil(text.length / DOC_CHUNK_CHARS),
+    text,
+  });
+  renderAttachStrip();
+}
+
+function removeDocument(i) {
+  pendingDocs.splice(i, 1);
+  renderAttachStrip();
+}
+window.removeDocument = removeDocument;
+
+// Paragraph-friendly chunking
+function chunkDocText(text) {
+  const chunks = [];
+  let pos = 0;
+  while (pos < text.length) {
+    let end = Math.min(pos + DOC_CHUNK_CHARS, text.length);
+    if (end < text.length) {
+      const nl = text.lastIndexOf('\n\n', end);
+      if (nl > pos + DOC_CHUNK_CHARS * 0.5) end = nl;
+    }
+    chunks.push(text.slice(pos, end));
+    pos = end;
+  }
+  return chunks;
+}
+
+// Keyword-overlap scoring of chunks vs the user's question
+function selectDocChunks(text, question, budgetChars) {
+  const chunks = chunkDocText(text);
+  const words = (question || '').toLowerCase().match(/[a-z0-9]{3,}/g) || [];
+  const uniq = [...new Set(words)];
+  const scored = chunks.map((c, i) => {
+    const lc = c.toLowerCase();
+    let score = 0;
+    for (const w of uniq) if (lc.includes(w)) score += 1;
+    return { i, c, score };
+  });
+  scored.sort((a, b) => b.score - a.score || a.i - b.i);
+  const picked = [];
+  let used = 0;
+  for (const s of scored) {
+    if (used + s.c.length > budgetChars) continue;
+    picked.push(s);
+    used += s.c.length;
+    if (picked.length >= 6) break;
+  }
+  picked.sort((a, b) => a.i - b.i); // restore document order
+  return { parts: picked.map(p => p.c), total: chunks.length, used: picked.length };
+}
+
+// Build the injected document block for a message at request time
+async function hydrateDocBlock(docsMeta, question, model, convChars) {
+  if (!docsMeta || !docsMeta.length) return null;
+  const budgetChars = Math.max(2000, resolveContextLength(model) * 4 * 0.6 - convChars);
+  const blocks = [];
+  for (const meta of docsMeta) {
+    const row = await IDBStore.getDoc(meta.id);
+    if (!row || !row.text) { console.warn('[PortableAI] Doc text missing for', meta.name); continue; }
+    if (row.text.length <= budgetChars) {
+      blocks.push(`[Document: ${meta.name}]\n${row.text}\n[End of document]`);
+    } else {
+      const sel = selectDocChunks(row.text, question, budgetChars);
+      blocks.push(`[Document: ${meta.name} — ${sel.used} of ${sel.total} sections shown, selected for relevance]\n${sel.parts.join('\n[…]\n')}\n[End of document excerpts]`);
+    }
+  }
+  return blocks.length ? blocks.join('\n\n') : null;
+}
 
 function showDropOverlay(show) {
   let ov = document.getElementById('dropOverlay');
@@ -5305,6 +5898,81 @@ async function hydrateImagesBase64(attachments) {
     out.push(b64);
   }
   return out;
+}
+
+/* ---------- Skills UI (manager + composer slash menu) ---------- */
+function renderSkillList() {
+  const list = document.getElementById('skillList');
+  if (!list) return;
+  list.innerHTML = skills.map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
+      <code style="font-size:12px">/${escapeHtml(s.name)}</code>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(s.description || '')}</span>
+      <button onclick="editSkill('${s.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 4px" title="Edit">✎</button>
+      <button onclick="deleteSkill('${s.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;padding:2px 4px" title="Delete">×</button>
+    </div>`).join('') || '<div style="font-size:12px;color:var(--muted)">No skills yet.</div>';
+}
+function editSkill(id) {
+  const s = skills.find(x => x.id === id); if (!s) return;
+  document.getElementById('skillFormId').value = s.id;
+  document.getElementById('skillFormName').value = s.name;
+  document.getElementById('skillFormDesc').value = s.description || '';
+  document.getElementById('skillFormTemplate').value = s.template;
+  document.getElementById('skillForm').style.display = 'block';
+}
+function deleteSkill(id) {
+  const s = skills.find(x => x.id === id); if (!s) return;
+  if (!confirm(`Delete the /${s.name} skill?`)) return;
+  skills = skills.filter(x => x.id !== id);
+  saveSkills(); renderSkillList();
+}
+window.editSkill = editSkill;
+window.deleteSkill = deleteSkill;
+
+// Composer "/" autocomplete — one shared floating menu
+let _skillMenuEl = null;
+function skillMenuOpen() { return _skillMenuEl && _skillMenuEl.style.display === 'block'; }
+function hideSkillMenu() { if (_skillMenuEl) _skillMenuEl.style.display = 'none'; }
+function showSkillMenu(filter) {
+  if (!_skillMenuEl) {
+    _skillMenuEl = document.createElement('div');
+    _skillMenuEl.id = 'skillMenu';
+    _skillMenuEl.className = 'menu';
+    document.body.appendChild(_skillMenuEl);
+    _skillMenuEl.addEventListener('mousedown', (e) => {
+      const t = e.target.closest('.menuItem');
+      if (t) { e.preventDefault(); applySkill(t.dataset.skill); }
+    });
+  }
+  const list = skills.filter(s => !filter || s.name.toLowerCase().startsWith(filter.toLowerCase()));
+  if (!list.length) { hideSkillMenu(); return; }
+  _skillMenuEl.innerHTML = list.slice(0, 8).map(s =>
+    `<div class="menuItem" data-skill="${s.id}"><span><b>/${escapeHtml(s.name)}</b></span><span style="color:var(--muted);font-size:11px;margin-left:10px">${escapeHtml(s.description || '')}</span></div>`).join('');
+  const r = ui.prompt.getBoundingClientRect();
+  _skillMenuEl.style.cssText = `display:block;position:fixed;left:${Math.round(r.left)}px;bottom:${Math.round(innerHeight - r.top + 8)}px;min-width:280px;max-width:440px;z-index:8500`;
+}
+function applySkill(id) {
+  const s = skills.find(x => x.id === id); if (!s) return;
+  const after = ui.prompt.value.replace(/^\/\S*\s?/, '');
+  if (s.template.includes('{{input}}')) {
+    if (after.trim()) {
+      ui.prompt.value = s.template.replace('{{input}}', after.trim());
+    } else {
+      const pos = s.template.indexOf('{{input}}');
+      ui.prompt.value = s.template.replace('{{input}}', '');
+      requestAnimationFrame(() => ui.prompt.setSelectionRange(pos, pos));
+    }
+  } else {
+    ui.prompt.value = s.template + (after ? ' ' + after : '');
+  }
+  ui.prompt.dispatchEvent(new Event('input'));
+  hideSkillMenu();
+  ui.prompt.focus();
+}
+// First menu entry — used by Enter/Tab completion in the composer
+function applyFirstSkill() {
+  const first = _skillMenuEl && _skillMenuEl.querySelector('.menuItem');
+  if (first) applySkill(first.dataset.skill);
 }
 
 /* ---------- Prompt library (welcome-screen tiles) ---------- */
@@ -5368,11 +6036,23 @@ function welcomeHtml() {
       <span class="wt-label">${cat.label}</span>
       <span class="wt-desc">${cat.desc}</span>
     </button>`).join('');
+  // No-models state renders INLINE here (an install hero above the tiles) —
+  // the old floating #onboarding panel overlapped this screen.
+  const hero = (typeof PromptStateManager !== 'undefined' && PromptStateManager.current === 'no-models') ? `
+    <div class="welcome-hero">
+      <span class="wh-icon">${icon('box', 18)}</span>
+      <span class="wh-text">
+        <span class="wh-title">No model installed yet</span>
+        <span class="wh-sub">Portable AI needs one model on the drive — a one-time download.</span>
+      </span>
+      <button class="wh-btn" onclick="if(window.ModelStore) ModelStore.open()">Install a model</button>
+    </div>` : '';
   return `
     <div class="welcome-wrap">
       <div class="welcome-mark">${icon('spark', 36)}</div>
       <div class="welcome-title">What can I help with?</div>
       <div class="welcome-sub">Fully offline — everything stays on this drive.</div>
+      ${hero}
       <div class="welcome-tiles">${tiles}</div>
     </div>`;
 }
@@ -5934,7 +6614,8 @@ async function sendPrompt() {
   const model = (conv.model || settings.model || '').trim();
   const text = ui.prompt.value.trim();
   const hasAttachments = pendingAttachments.length > 0;
-  if (!text && !hasAttachments) return;   // image-only sends are allowed
+  const hasDocs = pendingDocs.length > 0;
+  if (!text && !hasAttachments && !hasDocs) return; // attachment-only sends allowed
   if (!model) {
     alert('Please select a model first');
     return;
@@ -5946,6 +6627,20 @@ async function sendPrompt() {
   }
   conv.model = model;
   const user = { role: 'user', content: text, ts: ts() };
+  if (hasDocs) {
+    // Persist doc text FIRST (write-once); the message carries only metadata.
+    const staged = pendingDocs.splice(0, pendingDocs.length);
+    renderAttachStrip();
+    for (const d of staged) {
+      const ok = await IDBStore.putDoc(d.id, { name: d.name, text: d.text });
+      if (!ok) {
+        showToast(`Couldn't store "${d.name}" — sending without it.`, 'error');
+        continue;
+      }
+      user.docs = user.docs || [];
+      user.docs.push({ id: d.id, name: d.name, size: d.size, chars: d.chars, chunkCount: d.chunkCount });
+    }
+  }
   if (hasAttachments) {
     // Persist the processed blobs FIRST; the message only carries metadata.
     const staged = pendingAttachments.splice(0, pendingAttachments.length);
@@ -5979,6 +6674,45 @@ function regenerateLast() {
   if (uIdx < 0) return; jsave(KEYS.convs, conversations); streamReplyFrom(conv, uIdx);
 }
 function stopStream() { if (streaming) { streaming.abort(); streaming = null; streamingNode = null; ui.stop.style.display = 'none'; ui.send.style.display = 'grid'; hideLeftLoading(); } }
+
+/* ---------- Workspace browser (connector mode, read-only) ---------- */
+async function openWorkspaceView() {
+  if (!(window.electron && window.electron.invoke)) return;
+  document.getElementById('wsOverlay')?.remove();
+  const files = await window.electron.invoke('workspace-list').catch(() => []);
+  const ov = document.createElement('div');
+  ov.id = 'wsOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:8800';
+  const rows = files.length ? files.map(f => `
+    <div class="menuItem" data-ws="${escapeHtml(f.path)}" style="display:flex;justify-content:space-between;gap:12px">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(f.path)}</span>
+      <span style="color:var(--muted);font-size:11px;flex:none">${formatSize ? formatSize(f.size) : f.size + ' B'}</span>
+    </div>`).join('')
+    : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Nothing here yet.<br>Files that agents or other tools drop in the <code>workspace/</code> folder on this drive show up here.</div>';
+  ov.innerHTML = `
+    <div class="sc-card" style="width:min(640px,94vw);max-height:80vh;display:flex;flex-direction:column">
+      <div class="sc-title" style="display:flex;justify-content:space-between;align-items:center">Workspace
+        <button id="wsClose" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">×</button></div>
+      <div id="wsList" style="overflow-y:auto;min-height:120px">${rows}</div>
+      <div id="wsPreview" style="display:none;overflow-y:auto;border-top:1px solid var(--border);margin-top:10px;padding-top:10px;max-height:45vh"></div>
+    </div>`;
+  ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  document.getElementById('wsClose').onclick = () => ov.remove();
+  document.getElementById('wsList').addEventListener('click', async (e) => {
+    const row = e.target.closest('[data-ws]'); if (!row) return;
+    const res = await window.electron.invoke('workspace-read', row.dataset.ws).catch(() => null);
+    const pv = document.getElementById('wsPreview');
+    pv.style.display = 'block';
+    if (!res) pv.textContent = 'Could not read that file.';
+    else if (res.tooBig) pv.textContent = `File is ${formatSize ? formatSize(res.size) : res.size + ' B'} — too large to preview.`;
+    else {
+      const name = row.dataset.ws.toLowerCase();
+      pv.innerHTML = `<div class="content">${name.endsWith('.md') ? md(res.text) : `<div class="codeblock"><pre><code>${highlight(res.text.slice(0, 200000), name.split('.').pop())}</code></pre></div>`}</div>`;
+    }
+  });
+}
+window.openWorkspaceView = openWorkspaceView;
 
 /* ---------- Image lightbox (vision chat) ---------- */
 let _lightboxUrl = null;
@@ -6059,13 +6793,11 @@ document.addEventListener('click', e => {
 });
 
 /* ---------- Export & Exit ---------- */
-function exportActive() {
-  const conv = conversations.find(c => c.id === activeId); if (!conv) return;
-  const name = (conv.title || 'chat').replace(/[^\w\-]+/g, '_').slice(0, 48) || 'chat';
+function chatToMarkdown(conv) {
   const roleLabel = { user: 'You', assistant: 'Assistant', system: 'System' };
   const header = `# ${conv.title || 'Conversation'}\n\n` +
     `*Model: ${conv.model || settings.model || 'unknown'} • Exported ${new Date().toLocaleString()}*\n`;
-  const body = conv.messages
+  const body = (conv.messages || [])
     .filter(m => m.role !== 'system')
     .map(m => {
       // Content already holds markdown (code fences preserved verbatim).
@@ -6073,17 +6805,90 @@ function exportActive() {
       const attachNote = (m.attachments && m.attachments.length)
         ? `*[${m.attachments.length} attached image${m.attachments.length > 1 ? 's' : ''} — not included in this export]*\n\n`
         : '';
-      let block = `## ${label}\n\n${attachNote}${(m.content || '').trim()}\n`;
+      const docNote = (m.docs && m.docs.length)
+        ? `*[Attached document: ${m.docs.map(d => d.name).join(', ')}]*\n\n`
+        : '';
+      let block = `## ${label}\n\n${attachNote}${docNote}${(m.content || '').trim()}\n`;
       if (m.role === 'assistant' && m.meta && m.meta.eval_count) {
         const tps = m.meta.tps ? ` • ${m.meta.tps.toFixed(1)} t/s` : '';
         block += `\n<sub>${m.meta.eval_count} tokens${tps}</sub>\n`;
       }
       return block;
     }).join('\n---\n\n');
-  const text = header + '\n' + body + '\n';
-  const blob = new Blob([text], { type: 'text/markdown' }); const url = URL.createObjectURL(blob);
+  return header + '\n' + body + '\n';
+}
+
+function exportActive() {
+  const conv = conversations.find(c => c.id === activeId); if (!conv) return;
+  const name = (conv.title || 'chat').replace(/[^\w\-]+/g, '_').slice(0, 48) || 'chat';
+  const blob = new Blob([chatToMarkdown(conv)], { type: 'text/markdown' }); const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = `${name}.md`; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- Export ALL chats as a zip (store-only encoder, no deps) ---------- */
+const _crcTable = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function _crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = _crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+// files: [{name, text}] → Blob of a valid STORE-method zip
+function buildZip(files) {
+  const enc = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  const now = new Date();
+  const dosTime = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+  const dosDate = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+  const u16 = (v) => new Uint8Array([v & 0xFF, (v >> 8) & 0xFF]);
+  const u32 = (v) => new Uint8Array([v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >>> 24) & 0xFF]);
+  for (const f of files) {
+    const nameB = enc.encode(f.name);
+    const data = enc.encode(f.text);
+    const crc = _crc32(data);
+    const local = [u32(0x04034b50), u16(20), u16(0x0800 /* UTF-8 names */), u16(0), u16(dosTime), u16(dosDate),
+      u32(crc), u32(data.length), u32(data.length), u16(nameB.length), u16(0), nameB, data];
+    const localLen = local.reduce((a, b) => a + b.length, 0);
+    central.push({ nameB, crc, size: data.length, offset });
+    chunks.push(...local);
+    offset += localLen;
+  }
+  const centralStart = offset;
+  for (const c of central) {
+    chunks.push(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(dosTime), u16(dosDate),
+      u32(c.crc), u32(c.size), u32(c.size), u16(c.nameB.length), u16(0), u16(0), u16(0), u16(0),
+      u32(0), u32(c.offset), c.nameB);
+    offset += 46 + c.nameB.length;
+  }
+  chunks.push(u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length),
+    u32(offset - centralStart), u32(centralStart), u16(0));
+  return new Blob(chunks, { type: 'application/zip' });
+}
+function exportAllChats() {
+  if (!conversations.length) { showToast('No conversations to export yet.', 'info'); return; }
+  const seen = new Set();
+  const files = conversations.map((c, i) => {
+    let base = (c.title || `chat-${i + 1}`).replace(/[^\w\-]+/g, '_').slice(0, 48) || `chat-${i + 1}`;
+    while (seen.has(base)) base += '_2';
+    seen.add(base);
+    return { name: `${base}.md`, text: chatToMarkdown(c) };
+  });
+  const blob = buildZip(files);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `portableai-chats-${new Date().toISOString().slice(0, 10)}.zip`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`Exported ${files.length} chat${files.length === 1 ? '' : 's'}.`, 'success');
 }
 async function saveAndExit() {
   for (const [id] of installs) { await cancelInstall(id, true); }
@@ -6166,6 +6971,7 @@ function renderSidebar() {
         ${snippet}
         <div class="chatMeta"><span class="chatModel">${escapeHtml(c.model || '')}</span><span class="chatDate">${fmtChatDate(convUpdatedAt(c))}</span></div>
       </div>
+      <div class="chatProj" onclick="openProjectMenu(event, '${c.id}')" title="Move to project"><svg class="ui-icon" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
       <div class="chatPin ${c.pinned ? 'isPinned' : ''}" onclick="togglePin(event, '${c.id}')" title="${c.pinned ? 'Unpin' : 'Pin'}">${PIN_SVG}</div>
       <div class="chatX" onclick="deleteChat(event, '${c.id}')" title="Delete chat">×</div>
     </div>`;
@@ -6177,11 +6983,33 @@ function renderSidebar() {
     return;
   }
 
+  // Projects render first; their chats are excluded from the date groups
+  let projectsHtml = '';
+  if (projects.length) {
+    projectsHtml = `<div class="chatGroupLabel projRow"><span>Projects</span><span class="projNew" onclick="createProject()" title="New project">+</span></div>` +
+      projects.map(p => {
+        const chats = list.filter(c => c.projectId === p.id);
+        const rows = p.collapsed ? '' : chats.map(itemHtml).join('');
+        return `
+        <div class="projHeader" onclick="toggleProject('${p.id}')">
+          <span class="projCaret">${p.collapsed ? '▸' : '▾'}</span>
+          <span class="projName" ondblclick="renameProject(event, '${p.id}')" title="Double-click to rename">${escapeHtml(p.name)}</span>
+          <span class="projCount">${chats.length}</span>
+          <span class="projAdd" onclick="editProjectInstructions(event, '${p.id}')" title="Project instructions">✎</span>
+          <span class="projAdd" onclick="newChatInProject(event, '${p.id}')" title="New chat in project">+</span>
+          <span class="projDel" onclick="deleteProject(event, '${p.id}')" title="Delete project">×</span>
+        </div>${rows}`;
+      }).join('');
+  } else {
+    projectsHtml = `<div class="chatGroupLabel projRow"><span>Projects</span><span class="projNew" onclick="createProject()" title="New project">+</span></div>`;
+  }
+
+  const ungrouped = list.filter(c => !c.projectId || !projectById(c.projectId));
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const DAY = 86400000;
   const groups = [['Pinned', []], ['Today', []], ['Yesterday', []], ['Previous 7 days', []], ['Older', []]];
-  for (const c of list) {
+  for (const c of ungrouped) {
     const t = convUpdatedAt(c);
     if (c.pinned) groups[0][1].push(c);
     else if (t >= dayStart) groups[1][1].push(c);
@@ -6189,11 +7017,117 @@ function renderSidebar() {
     else if (t >= dayStart - 7 * DAY) groups[3][1].push(c);
     else groups[4][1].push(c);
   }
-  ui.chatList.innerHTML = groups
+  ui.chatList.innerHTML = projectsHtml + groups
     .filter(([, arr]) => arr.length)
     .map(([label, arr]) => `<div class="chatGroupLabel">${label}</div>` + arr.map(itemHtml).join(''))
     .join('');
 }
+
+/* ---------- Project actions ---------- */
+function createProject() {
+  const name = prompt('Project name:');
+  if (!name || !name.trim()) return;
+  projects.push({ id: uid(), name: name.trim().slice(0, 40), instructions: '', collapsed: false, createdAt: Date.now() });
+  saveProjects(); renderSidebar();
+}
+function toggleProject(id) {
+  const p = projectById(id); if (!p) return;
+  p.collapsed = !p.collapsed; saveProjects(); renderSidebar();
+}
+function renameProject(e, id) {
+  e.stopPropagation();
+  const p = projectById(id); if (!p) return;
+  const name = prompt('Rename project:', p.name);
+  if (name && name.trim()) { p.name = name.trim().slice(0, 40); saveProjects(); renderSidebar(); }
+}
+function deleteProject(e, id) {
+  e.stopPropagation();
+  const p = projectById(id); if (!p) return;
+  if (!confirm(`Delete project "${p.name}"? Its chats stay — they just leave the project.`)) return;
+  for (const c of conversations) if (c.projectId === id) delete c.projectId;
+  projects = projects.filter(x => x.id !== id);
+  saveProjects(); jsave(KEYS.convs, conversations); renderSidebar();
+}
+function newChatInProject(e, id) {
+  e.stopPropagation();
+  newChat();
+  const conv = conversations.find(c => c.id === activeId);
+  if (conv) { conv.projectId = id; jsave(KEYS.convs, conversations); renderSidebar(); }
+}
+// Small popup listing projects to move a chat into
+function openProjectMenu(e, chatId) {
+  e.stopPropagation();
+  document.getElementById('projMenu')?.remove();
+  const conv = conversations.find(c => c.id === chatId); if (!conv) return;
+  const menu = document.createElement('div');
+  menu.id = 'projMenu';
+  menu.className = 'menu';
+  menu.style.cssText = 'display:block;position:fixed;z-index:9000;min-width:180px';
+  const items = [];
+  for (const p of projects) {
+    items.push(`<div class="menuItem" data-proj="${p.id}">${escapeHtml(p.name)}${conv.projectId === p.id ? ' ✓' : ''}</div>`);
+  }
+  items.push(`<div class="menuItem" data-proj="__new">+ New project…</div>`);
+  if (conv.projectId) items.push(`<div class="menuItem" data-proj="__none">Remove from project</div>`);
+  menu.innerHTML = items.join('');
+  document.body.appendChild(menu);
+  const r = e.target.closest('.chatProj').getBoundingClientRect();
+  menu.style.left = Math.min(r.left, innerWidth - 200) + 'px';
+  menu.style.top = (r.bottom + 4) + 'px';
+  menu.addEventListener('click', (ev) => {
+    const t = ev.target.closest('.menuItem'); if (!t) return;
+    const val = t.dataset.proj;
+    if (val === '__new') {
+      const name = prompt('Project name:');
+      if (name && name.trim()) {
+        const p = { id: uid(), name: name.trim().slice(0, 40), instructions: '', collapsed: false, createdAt: Date.now() };
+        projects.push(p); conv.projectId = p.id; saveProjects();
+      }
+    } else if (val === '__none') {
+      delete conv.projectId;
+    } else {
+      conv.projectId = val;
+    }
+    jsave(KEYS.convs, conversations); renderSidebar(); menu.remove();
+  });
+  setTimeout(() => document.addEventListener('click', () => menu.remove(), { once: true }), 0);
+}
+// Instructions editor — small overlay with a textarea (injected into the
+// system prompt for every chat in the project).
+function editProjectInstructions(e, id) {
+  e.stopPropagation();
+  const p = projectById(id); if (!p) return;
+  document.getElementById('projInstrOverlay')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'projInstrOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:9000';
+  ov.innerHTML = `
+    <div class="sc-card" style="width:min(480px,92vw)">
+      <div class="sc-title">Instructions — ${escapeHtml(p.name)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Sent with every chat in this project (like custom instructions, scoped to the project).</div>
+      <textarea id="projInstrText" rows="6" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);color:var(--text);font-size:13px;font-family:inherit;resize:vertical">${escapeHtml(p.instructions || '')}</textarea>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="projInstrCancel" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12.5px;cursor:pointer">Cancel</button>
+        <button id="projInstrSave" style="background:var(--brand);border:0;color:var(--brand-contrast);padding:7px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer">Save</button>
+      </div>
+    </div>`;
+  ov.addEventListener('click', (ev) => { if (ev.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  document.getElementById('projInstrCancel').onclick = () => ov.remove();
+  document.getElementById('projInstrSave').onclick = () => {
+    p.instructions = document.getElementById('projInstrText').value.trim();
+    saveProjects(); ov.remove();
+    showToast('Project instructions saved.', 'success');
+  };
+  document.getElementById('projInstrText').focus();
+}
+window.editProjectInstructions = editProjectInstructions;
+window.createProject = createProject;
+window.toggleProject = toggleProject;
+window.renameProject = renameProject;
+window.deleteProject = deleteProject;
+window.newChatInProject = newChatInProject;
+window.openProjectMenu = openProjectMenu;
 
 function togglePin(e, id) {
   e.stopPropagation();
@@ -6249,12 +7183,15 @@ function deleteChat(e, id) {
     const title = (conv.title || 'this chat').slice(0, 40);
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
   }
-  // Drop this chat's image blobs from the IDB store (fire-and-forget)
+  // Drop this chat's image blobs + doc texts from IDB (fire-and-forget)
   if (conv) {
-    const imgIds = [];
-    for (const m of (conv.messages || []))
+    const imgIds = [], docIds = [];
+    for (const m of (conv.messages || [])) {
       for (const a of (m.attachments || [])) imgIds.push(a.id);
+      for (const d of (m.docs || [])) docIds.push(d.id);
+    }
     if (imgIds.length) IDBStore.deleteImages(imgIds);
+    if (docIds.length) IDBStore.deleteDocs(docIds);
   }
   conversations = conversations.filter(c => c.id !== id);
   if (activeId === id) activeId = conversations[0] ? conversations[0].id : null;
@@ -6274,6 +7211,7 @@ window.deleteChat = deleteChat;
 /* ---------- Messages ---------- */
 function renderMessages(scroll) {
   if (!ui.messages) return;
+  try { updateContextMeter(); } catch { }
   const conv = conversations.find(c => c.id === activeId);
   if (!conv) {
     ui.messages.innerHTML = '';
@@ -6282,10 +7220,9 @@ function renderMessages(scroll) {
     } else {
       ui.messages.innerHTML = welcomeHtml();
     }
-    if (conversations.length === 0 && ui.onboarding) ui.onboarding.style.display = 'block';
     return;
   }
-  if (ui.onboarding && PromptStateManager.current !== 'no-models') ui.onboarding.style.display = 'none';
+  if (ui.onboarding) ui.onboarding.style.display = 'none'; // inline hero replaced the floating panel
 
   // A fresh, empty conversation gets the welcome tiles too
   if (!conv.messages.length) {
@@ -6331,6 +7268,11 @@ function renderMessages(scroll) {
       ? `<div class="msg-thumbs">${m.attachments.map(a =>
         `<img src="${a.thumb}" data-img-id="${a.id}" alt="attached image">`).join('')}</div>`
       : '';
+    // Attached-document chips
+    const docsHtml = (m.docs && m.docs.length)
+      ? `<div class="msg-docs">${m.docs.map(d =>
+        `<span class="msg-doc">${icon('folder', 12)} ${escapeHtml(d.name)} <span style="opacity:.6">· ${Math.max(1, Math.round(d.chars / 1000))}K chars</span></span>`).join('')}</div>`
+      : '';
 
     if (m.role === 'user') {
       return `
@@ -6338,6 +7280,7 @@ function renderMessages(scroll) {
           <div class="row">
             <div class="bubble">
               ${thumbsHtml}
+              ${docsHtml}
               <div class="content">${md(m.content)}</div>
             </div>
             <div class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -6420,7 +7363,7 @@ function keywordsOverlap(kwA, kwB) {
 }
 
 // Prompt 3: Unified System-Prompt Builder
-function buildSystemPrompt(modelName, userMessage = '') {
+function buildSystemPrompt(modelName, userMessage = '', chatConv = null) {
   // 1. Base System Instruction
   let systemMsg = "You are PortableAi, a local AI assistant running on the user's device. You are helpful, harmless, and honest.";
 
@@ -6431,6 +7374,15 @@ function buildSystemPrompt(modelName, userMessage = '') {
     systemMsg += "\n\n" + settings.systemByModel[modelName];
   } else if (settings.systemDefault) {
     systemMsg += "\n\n" + settings.systemDefault;
+  }
+
+  // 2b. Project instructions — scoped custom instructions for every chat in
+  // the conversation's project.
+  if (chatConv && chatConv.projectId) {
+    const proj = projectById(chatConv.projectId);
+    if (proj && proj.instructions) {
+      systemMsg += `\n\nProject "${proj.name}" instructions:\n${proj.instructions}`;
+    }
   }
 
   // 3. Personalization Precedence Logic
@@ -6549,7 +7501,7 @@ async function streamReplyFrom(conv, uIdx) {
   // System Prompt (Unified Builder)
   // Get current user message for memory relevance filtering
   const currentUserMsg = conv.messages[uIdx]?.content || '';
-  const sysContent = buildSystemPrompt(conv.model, currentUserMsg);
+  const sysContent = buildSystemPrompt(conv.model, currentUserMsg, conv);
   if (sysContent) messages.push({ role: 'system', content: sysContent });
 
   // History
@@ -6557,6 +7509,7 @@ async function streamReplyFrom(conv, uIdx) {
   // the IDB blob store at request time only — the persisted message carries
   // just {id, thumb, ...} metadata. A missing blob degrades to text-only.
   const history = conv.messages.slice(0, uIdx + 1);
+  const convChars = history.reduce((a, m) => a + (m.content || '').length, 0);
   for (const m of history) {
     const entry = { role: m.role, content: m.content };
     if (m.images) entry.images = m.images; // legacy passthrough
@@ -6565,10 +7518,18 @@ async function streamReplyFrom(conv, uIdx) {
       if (imgs) entry.images = imgs;
       else console.warn('[PortableAI] Attachment blob(s) missing for a message — sent text-only.');
     }
+    if (m.docs && m.docs.length) {
+      // Chunk selection uses the CURRENT question so follow-ups re-pick the
+      // relevant sections each turn.
+      const docBlock = await hydrateDocBlock(m.docs, currentUserMsg, model, convChars);
+      if (docBlock) entry.content = `${docBlock}\n\n${entry.content || 'Please review the document above.'}`;
+    }
     messages.push(entry);
   }
 
-  const body = { model, messages: messages, stream: true, options: { temperature: settings.temperature, num_ctx: settings.contextLength || 4096 } };
+  // Chars actually sent — pairs with prompt_eval_count to calibrate the meter
+  const sentChars = messages.reduce((a, mm) => a + (mm.content || '').length, 0);
+  const body = { model, messages: messages, stream: true, options: { temperature: settings.temperature, num_ctx: resolveContextLength(model) } };
   // Show loading before request
   showLeftLoading(model, 'Generating...');
 
@@ -6633,7 +7594,7 @@ async function streamReplyFrom(conv, uIdx) {
             const evalCount = obj.eval_count ?? obj.metrics?.eval_count ?? 0;
             const evalDurNs = obj.eval_duration ?? obj.metrics?.eval_duration ?? 0;
             const tps = evalDurNs ? (evalCount / (evalDurNs / 1e9)) : 0;
-            finalStats = { eval_count: evalCount, eval_duration: evalDurNs, tps };
+            finalStats = { eval_count: evalCount, eval_duration: evalDurNs, tps, prompt_eval_count: obj.prompt_eval_count ?? obj.metrics?.prompt_eval_count ?? 0 };
           }
           // Capture thinking from Ollama's native thinking API (Gemma 4, etc.)
           if (obj.message && obj.message.thinking) {
@@ -6701,6 +7662,11 @@ async function streamReplyFrom(conv, uIdx) {
         window.__lastTps = finalStats.tps || 0;
         const tpsEl = document.getElementById('statusTps');
         if (tpsEl) tpsEl.textContent = window.__lastTps ? window.__lastTps.toFixed(1) + ' t/s' : '—';
+        // Calibrate the context meter with the REAL token count of the prompt
+        if (finalStats.prompt_eval_count && sentChars > 0) {
+          conv.lastPromptTokens = finalStats.prompt_eval_count;
+          conv.lastPromptChars = sentChars;
+        }
       }
       await maybeAutoNameConversation(conv);
       conv.updatedAt = Date.now();
@@ -7116,6 +8082,103 @@ function _mergeCacheSnapshotNames(liveNames) {
   }
   return merged;
 }
+
+// Catalog size lookup for the cache-space guard (0 = unknown, guard skipped)
+function catalogSizeFor(nameOrId) {
+  if (!nameOrId || typeof MODEL_CATALOG === 'undefined') return 0;
+  const n = String(nameOrId).toLowerCase();
+  const hit = MODEL_CATALOG.find(m => {
+    const id = (m.id || '').toLowerCase();
+    return id === n || id.split(':')[0] === n.split(':')[0];
+  });
+  return (hit && hit.sizeBytes) || 0;
+}
+
+// Aggregate progress across ALL layers of an Ollama pull. The API streams
+// per-layer {digest, total, completed} — tracking a single layer makes the
+// percent dip/reset whenever a new layer starts (the "stuck at 2%" effect).
+// feed() returns {percent, label, speedText, etaText, phase} ready for DOM.
+function newPullProgress() {
+  const layers = new Map(); // digest -> {total, completed}
+  let lastBytes = 0, lastTime = Date.now();
+  let speedText = '', etaText = '';
+  let maxPercent = 0; // high-water mark — the bar never retreats when a new layer grows the total
+  const gb = (n) => (n / 1e9).toFixed(n >= 99.5e8 ? 0 : 1);
+  return {
+    feed(data) {
+      if (data.digest && data.total) {
+        layers.set(data.digest, { total: data.total, completed: data.completed || 0 });
+      }
+      let total = 0, done = 0;
+      for (const l of layers.values()) { total += l.total; done += l.completed; }
+      const now = Date.now();
+      const dt = (now - lastTime) / 1000;
+      if (dt > 0.4 && done >= lastBytes) {
+        const bps = (done - lastBytes) / dt;
+        if (bps > 0) {
+          speedText = `${(bps / 1e6).toFixed(1)} MB/s`;
+          const secs = Math.ceil((total - done) / bps);
+          etaText = secs < 60 ? `~${secs}s left`
+            : secs < 3600 ? `~${Math.ceil(secs / 60)}m left`
+              : `~${Math.floor(secs / 3600)}h ${Math.ceil((secs % 3600) / 60)}m left`;
+        }
+        lastBytes = done; lastTime = now;
+      }
+      const rawPercent = total ? Math.min(100, Math.floor((done / total) * 100)) : 0;
+      const percent = Math.max(maxPercent, rawPercent);
+      maxPercent = percent;
+      const status = String(data.status || '');
+      let phase = 'downloading', label;
+      if (/verif/i.test(status)) {
+        phase = 'verifying';
+        label = 'Verifying download… (can take a few minutes)';
+        speedText = ''; etaText = '';
+      } else if (/writing|extract|remov|success/i.test(status)) {
+        phase = 'finalizing';
+        label = 'Finalizing…';
+        speedText = ''; etaText = '';
+      } else if (total) {
+        label = `Downloading — ${gb(done)} GB of ${gb(total)} GB`;
+      } else {
+        phase = 'starting';
+        label = 'Preparing…';
+      }
+      return { percent, label, speedText, etaText, phase, hasBytes: total > 0 };
+    }
+  };
+}
+
+// Enter cache-mode for an install if possible. Returns true when cache mode
+// is ACTIVE (Ollama now points at the HOST cache dir), false when the
+// install proceeds direct-to-drive (host disk too small, no IPC bridge, or
+// user chose direct). Callers must only run finish-cache-install when this
+// returned true.
+async function beginCacheInstall(expectedBytes, onStatus) {
+  if (!(window.electron && window.electron.invoke)) return false;
+  if (!_cacheInstallActive) {
+    // Snapshot installed models before Ollama restarts on the empty cache dir
+    try {
+      const snap = await fetch(`${OLLAMA}/api/tags`);
+      if (snap.ok) { _preCacheModelsList = (await snap.json()).models || []; }
+    } catch (_) { }
+  }
+  if (onStatus) onStatus('Preparing fast install…');
+  try {
+    const res = await window.electron.invoke('prepare-cache-install', { expectedBytes: expectedBytes || 0 });
+    if (res && res.mode === 'cache') {
+      _cacheInstallActive = true;
+      refreshOllamaPort();
+      return true;
+    }
+    if (res && res.mode === 'direct-fallback') {
+      showToast('Not enough space on this computer for the fast install cache — downloading straight to the drive instead.', 'info');
+    }
+  } catch (e) {
+    console.warn('[PortableAI] prepare-cache-install failed; falling back to direct install.', e);
+  }
+  _preCacheModelsList = [];
+  return false;
+}
 async function extractMemory(model, userMsg, assistantMsg) {
   try {
     const prompt = `Analyze this interaction and decide if there is any persistent, user-related fact worth remembering.
@@ -7266,24 +8329,17 @@ async function installModelStream(name) {
   updateActivity(`Queued install for "${name}"…`, 'neutral');
   showToast(`"${name}" has been added to the install queue.`, 'info');
 
+  // Cache Mode Logic — cacheActive is the ONLY source of truth for whether
+  // finish-cache-install must run for this install. Declared OUTSIDE the try
+  // so the catch's restore path can see it.
+  let cacheActive = false;
   try {
     // A. Install lifecycle - started
     updateActivity(`Installing "${name}"…`, 'neutral');
     updateQueueJob(id, `Installing "${escapeHtml(name)}"...`, 'Starting download…', 'progress');
 
-    // Cache Mode Logic
-    if (settings.installMode === 'cache' && window.electron && window.electron.invoke) {
-      // Snapshot installed models before Ollama restarts on empty cache dir
-      if (!_cacheInstallActive) {
-        try {
-          const snap = await fetch(`${OLLAMA}/api/tags`);
-          if (snap.ok) { _preCacheModelsList = (await snap.json()).models || []; }
-        } catch (_) { }
-        _cacheInstallActive = true;
-      }
-      note.textContent = 'Preparing cache... (restarting Ollama)';
-      await window.electron.invoke('prepare-cache-install');
-      refreshOllamaPort();
+    if (settings.installMode === 'cache') {
+      cacheActive = await beginCacheInstall(catalogSizeFor(name), s => { note.textContent = s; });
     }
 
     const r = await fetch(`${OLLAMA}/api/pull`, {
@@ -7317,6 +8373,8 @@ async function installModelStream(name) {
     const dec = new TextDecoder();
     let buf = '';
     let lastPercent = 0;
+    const prog = newPullProgress(); // aggregate multi-layer progress
+    let lastDomUpdate = 0;
 
     while (true) {
       const { value, done } = await reader.read();
@@ -7345,31 +8403,22 @@ async function installModelStream(name) {
             throw new Error(obj.error);
           }
 
-          // A. Install lifecycle - progress
+          // A. Install lifecycle - progress (aggregate across layers)
           if (obj.status) {
-            let text = obj.status;
-            let displayStatus = text;
-
-            // Map status to user-friendly text
-            if (text.toLowerCase().includes('download')) displayStatus = 'Downloading…';
-            else if (text.toLowerCase().includes('verif')) displayStatus = 'Verifying…';
-            else if (text.toLowerCase().includes('extract') || text.toLowerCase().includes('uncompress')) displayStatus = 'Finalizing…';
-
-            if (obj.total && obj.completed) {
-              const pct = Math.round((obj.completed / obj.total) * 100);
-              bar.style.width = `${pct}%`;
-              displayStatus = `${displayStatus} ${pct}%`;
-
-              PromptStateManager.update('pulling', { model: name, progress: pct });
-
-              // Update activity line periodically
-              if (pct !== lastPercent && pct % 10 === 0) {
-                updateActivity(`Installing "${name}"… ${pct}%`, 'neutral');
-                lastPercent = pct;
+            const p = prog.feed(obj);
+            const now = Date.now();
+            if (now - lastDomUpdate >= 150 || p.percent >= 100 || p.phase !== 'downloading') {
+              lastDomUpdate = now;
+              bar.style.width = `${p.phase === 'verifying' || p.phase === 'finalizing' ? 100 : p.percent}%`;
+              note.textContent = [p.label, p.speedText, p.etaText].filter(Boolean).join(' · ');
+            }
+            if (p.hasBytes) {
+              PromptStateManager.update('pulling', { model: name, progress: p.percent });
+              if (p.percent !== lastPercent && p.percent % 10 === 0) {
+                updateActivity(`Installing "${name}"… ${p.percent}%`, 'neutral');
+                lastPercent = p.percent;
               }
             }
-
-            note.textContent = displayStatus;
           }
         } catch (parseErr) {
           // Ignore JSON parse errors for incomplete lines
@@ -7385,8 +8434,8 @@ async function installModelStream(name) {
     bar.style.width = '100%';
     bar.style.background = '#22c55e';
 
-    if (settings.installMode === 'cache' && window.electron && window.electron.invoke) {
-      note.textContent = 'Moving files to destination\u2026';
+    if (cacheActive) {
+      note.textContent = 'Moving to drive\u2026';
       await window.electron.invoke('finish-cache-install');
       refreshOllamaPort();
       _cacheInstallActive = false;
@@ -7401,8 +8450,8 @@ async function installModelStream(name) {
     await listModels();
 
   } catch (e) {
-    // If cache mode failed, try to restore anyway
-    if (settings.installMode === 'cache' && window.electron && window.electron.invoke) {
+    // If cache mode was active, restore Ollama to the drive either way
+    if (cacheActive) {
       try { await window.electron.invoke('finish-cache-install'); } catch { }
       _cacheInstallActive = false;
       _preCacheModelsList = [];
@@ -7562,28 +8611,28 @@ async function uninstallModel(name) {
 /* ---------- Shared Model Catalog & Utilities ---------- */
 const MODEL_CATALOG = [
   // 4 GB TIER
-  { id: 'deepseek-r1:1.5b', name: 'DeepSeek R1 1.5B', maker: 'DeepSeek', category: 'reasoning', params: 1.5, ramNeeded: 3, multimodal: false, description: 'Ultra-compact reasoning model that shows its thinking process. Great for low-resource hardware with step-by-step logic.', size: '1.1 GB', sizeBytes: 1100000000, minRAM: 4, recRAM: 4, speedApple: 55, speedIntel: 40, tags: ['ultralight', 'thinking'] },
-  { id: 'llama3.2:3b', name: 'Llama 3.2 3B', maker: 'Meta', category: 'general', params: 3, ramNeeded: 4, multimodal: false, description: 'Lightweight Meta model with 128K context. Reliable daily driver for basic chat, Q&A, and quick tasks.', size: '2.0 GB', sizeBytes: 2000000000, minRAM: 4, recRAM: 4, speedApple: 30, speedIntel: 20, tags: ['reliable'] },
+  { id: 'deepseek-r1:1.5b', maxCtx: 131072, name: 'DeepSeek R1 1.5B', maker: 'DeepSeek', category: 'reasoning', params: 1.5, ramNeeded: 3, multimodal: false, description: 'Ultra-compact reasoning model that shows its thinking process. Great for low-resource hardware with step-by-step logic.', size: '1.1 GB', sizeBytes: 1100000000, minRAM: 4, recRAM: 4, speedApple: 55, speedIntel: 40, tags: ['ultralight', 'thinking'] },
+  { id: 'llama3.2:3b', maxCtx: 131072, name: 'Llama 3.2 3B', maker: 'Meta', category: 'general', params: 3, ramNeeded: 4, multimodal: false, description: 'Lightweight Meta model with 128K context. Reliable daily driver for basic chat, Q&A, and quick tasks.', size: '2.0 GB', sizeBytes: 2000000000, minRAM: 4, recRAM: 4, speedApple: 30, speedIntel: 20, tags: ['reliable'] },
 
   // 8 GB TIER
-  { id: 'phi4-mini', name: 'Phi-4 Mini', maker: 'Microsoft', category: 'reasoning', params: 3.8, ramNeeded: 4, multimodal: false, description: 'The star of the 8GB tier. Unbelievably smart for its size — excels at reasoning, logic, and 128K context.', size: '2.5 GB', sizeBytes: 2500000000, minRAM: 4, recRAM: 8, speedApple: 28, speedIntel: 18, tags: ['reasoning', 'star'] },
-  { id: 'qwen3:4b', name: 'Qwen 3 4B', maker: 'Alibaba', category: 'general', params: 4, ramNeeded: 4, multimodal: false, description: 'Highly optimized 4B model with 256K context. Excellent multilingual support and balanced reasoning.', size: '2.5 GB', sizeBytes: 2500000000, minRAM: 4, recRAM: 8, speedApple: 26, speedIntel: 17, tags: ['optimized', 'multilingual'] },
-  { id: 'gemma4:e2b', name: 'Gemma 4 E2B', maker: 'Google', category: 'general', params: 2, ramNeeded: 4, multimodal: true, description: 'Google\'s latest multimodal model with built-in thinking mode. Handles text and images with 128K context in a tiny footprint.', size: '7.2 GB', sizeBytes: 7200000000, minRAM: 4, recRAM: 8, speedApple: 25, speedIntel: 16, tags: ['vision', 'thinking', 'creative'] },
+  { id: 'phi4-mini', maxCtx: 131072, name: 'Phi-4 Mini', maker: 'Microsoft', category: 'reasoning', params: 3.8, ramNeeded: 4, multimodal: false, description: 'The star of the 8GB tier. Unbelievably smart for its size — excels at reasoning, logic, and 128K context.', size: '2.5 GB', sizeBytes: 2500000000, minRAM: 4, recRAM: 8, speedApple: 28, speedIntel: 18, tags: ['reasoning', 'star'] },
+  { id: 'qwen3:4b', maxCtx: 40960, name: 'Qwen 3 4B', maker: 'Alibaba', category: 'general', params: 4, ramNeeded: 4, multimodal: false, description: 'Highly optimized 4B model with 256K context. Excellent multilingual support and balanced reasoning.', size: '2.5 GB', sizeBytes: 2500000000, minRAM: 4, recRAM: 8, speedApple: 26, speedIntel: 17, tags: ['optimized', 'multilingual'] },
+  { id: 'gemma4:e2b', maxCtx: 131072, name: 'Gemma 4 E2B', maker: 'Google', category: 'general', params: 2, ramNeeded: 4, multimodal: true, description: 'Google\'s latest multimodal model with built-in thinking mode. Handles text and images with 128K context in a tiny footprint.', size: '7.2 GB', sizeBytes: 7200000000, minRAM: 4, recRAM: 8, speedApple: 25, speedIntel: 16, tags: ['vision', 'thinking', 'creative'] },
 
   // 16 GB TIER
-  { id: 'llama3.1:8b', name: 'Llama 3.1 8B', maker: 'Meta', category: 'general', params: 8, ramNeeded: 7, multimodal: false, description: 'The default sweet spot. Rock-solid 8B model with 128K context. Covers every major use case flawlessly.', size: '4.7 GB', sizeBytes: 4700000000, minRAM: 8, recRAM: 16, speedApple: 15, speedIntel: 10, tags: ['popular', 'default'] },
-  { id: 'qwen3:8b', name: 'Qwen 3 8B', maker: 'Alibaba', category: 'general', params: 8, ramNeeded: 7, multimodal: false, description: 'Strong multilingual 8B model with 40K context. Supports Chinese, Spanish, French, and 20+ languages natively.', size: '5.2 GB', sizeBytes: 5200000000, minRAM: 8, recRAM: 16, speedApple: 14, speedIntel: 9, tags: ['multilingual'] },
-  { id: 'deepseek-r1:8b', name: 'DeepSeek R1 8B', maker: 'DeepSeek', category: 'reasoning', params: 8, ramNeeded: 7, multimodal: false, description: 'Advanced reasoning model with 128K context that shows its thinking process step-by-step.', size: '5.2 GB', sizeBytes: 5200000000, minRAM: 8, recRAM: 16, speedApple: 14, speedIntel: 9, tags: ['thinking'] },
-  { id: 'gemma4:e4b', name: 'Gemma 4 E4B', maker: 'Google', category: 'general', params: 4, ramNeeded: 6, multimodal: true, description: 'Google\'s mid-size multimodal Gemma 4 with built-in thinking mode. Handles text and images with 128K context and strong reasoning.', size: '9.6 GB', sizeBytes: 9600000000, minRAM: 8, recRAM: 16, speedApple: 12, speedIntel: 8, tags: ['vision', 'thinking'] },
+  { id: 'llama3.1:8b', maxCtx: 131072, name: 'Llama 3.1 8B', maker: 'Meta', category: 'general', params: 8, ramNeeded: 7, multimodal: false, description: 'The default sweet spot. Rock-solid 8B model with 128K context. Covers every major use case flawlessly.', size: '4.7 GB', sizeBytes: 4700000000, minRAM: 8, recRAM: 16, speedApple: 15, speedIntel: 10, tags: ['popular', 'default'] },
+  { id: 'qwen3:8b', maxCtx: 40960, name: 'Qwen 3 8B', maker: 'Alibaba', category: 'general', params: 8, ramNeeded: 7, multimodal: false, description: 'Strong multilingual 8B model with 40K context. Supports Chinese, Spanish, French, and 20+ languages natively.', size: '5.2 GB', sizeBytes: 5200000000, minRAM: 8, recRAM: 16, speedApple: 14, speedIntel: 9, tags: ['multilingual'] },
+  { id: 'deepseek-r1:8b', maxCtx: 131072, name: 'DeepSeek R1 8B', maker: 'DeepSeek', category: 'reasoning', params: 8, ramNeeded: 7, multimodal: false, description: 'Advanced reasoning model with 128K context that shows its thinking process step-by-step.', size: '5.2 GB', sizeBytes: 5200000000, minRAM: 8, recRAM: 16, speedApple: 14, speedIntel: 9, tags: ['thinking'] },
+  { id: 'gemma4:e4b', maxCtx: 131072, name: 'Gemma 4 E4B', maker: 'Google', category: 'general', params: 4, ramNeeded: 6, multimodal: true, description: 'Google\'s mid-size multimodal Gemma 4 with built-in thinking mode. Handles text and images with 128K context and strong reasoning.', size: '9.6 GB', sizeBytes: 9600000000, minRAM: 8, recRAM: 16, speedApple: 12, speedIntel: 8, tags: ['vision', 'thinking'] },
 
   // 32 GB TIER (Cloud AI quality)
-  { id: 'deepseek-r1:14b', name: 'DeepSeek R1 14B', maker: 'DeepSeek', category: 'reasoning', params: 14, ramNeeded: 12, multimodal: false, description: 'Serious reasoning power with 128K context. Shows detailed thinking chains for complex problem solving.', size: '9.0 GB', sizeBytes: 9000000000, minRAM: 16, recRAM: 32, speedApple: 9, speedIntel: 6, tags: ['reasoning', 'quality'] },
-  { id: 'qwen3:14b', name: 'Qwen 3 14B', maker: 'Alibaba', category: 'general', params: 14, ramNeeded: 12, multimodal: false, description: 'Noticeably better at complex tasks, long conversation, and nuanced writing. 40K context with excellent multilingual support.', size: '9.3 GB', sizeBytes: 9300000000, minRAM: 16, recRAM: 32, speedApple: 9, speedIntel: 6, tags: ['quality', 'multilingual'] },
-  { id: 'gemma4:26b', name: 'Gemma 4 26B', maker: 'Google', category: 'general', params: 26, ramNeeded: 18, multimodal: true, description: 'Google\'s flagship multimodal model with built-in thinking mode. Handles text and images with 256K context — approaching GPT-4 quality.', size: '18 GB', sizeBytes: 18000000000, minRAM: 16, recRAM: 32, speedApple: 5, speedIntel: 3, tags: ['vision', 'thinking', 'cloud-tier'] },
+  { id: 'deepseek-r1:14b', maxCtx: 131072, name: 'DeepSeek R1 14B', maker: 'DeepSeek', category: 'reasoning', params: 14, ramNeeded: 12, multimodal: false, description: 'Serious reasoning power with 128K context. Shows detailed thinking chains for complex problem solving.', size: '9.0 GB', sizeBytes: 9000000000, minRAM: 16, recRAM: 32, speedApple: 9, speedIntel: 6, tags: ['reasoning', 'quality'] },
+  { id: 'qwen3:14b', maxCtx: 40960, name: 'Qwen 3 14B', maker: 'Alibaba', category: 'general', params: 14, ramNeeded: 12, multimodal: false, description: 'Noticeably better at complex tasks, long conversation, and nuanced writing. 40K context with excellent multilingual support.', size: '9.3 GB', sizeBytes: 9300000000, minRAM: 16, recRAM: 32, speedApple: 9, speedIntel: 6, tags: ['quality', 'multilingual'] },
+  { id: 'gemma4:26b', maxCtx: 131072, name: 'Gemma 4 26B', maker: 'Google', category: 'general', params: 26, ramNeeded: 18, multimodal: true, description: 'Google\'s flagship multimodal model with built-in thinking mode. Handles text and images with 256K context — approaching GPT-4 quality.', size: '18 GB', sizeBytes: 18000000000, minRAM: 16, recRAM: 32, speedApple: 5, speedIntel: 3, tags: ['vision', 'thinking', 'cloud-tier'] },
 
   // 64 GB TIER (Workstation class)
-  { id: 'llama3.3:70b', name: 'Llama 3.3 70B', maker: 'Meta', category: 'general', params: 70, ramNeeded: 44, multimodal: false, description: 'The absolute king of local models. True ChatGPT quality requiring massive workstation specs.', size: '43.0 GB', sizeBytes: 43000000000, minRAM: 32, recRAM: 64, speedApple: 4, speedIntel: 2, tags: ['king', 'workstation'] },
-  { id: 'deepseek-r1:70b', name: 'DeepSeek R1 70B', maker: 'DeepSeek', category: 'reasoning', params: 70, ramNeeded: 44, multimodal: false, description: 'The maximum capstone in open-source reasoning. 128K context with superhuman logic puzzle resolution.', size: '43.0 GB', sizeBytes: 43000000000, minRAM: 32, recRAM: 64, speedApple: 4, speedIntel: 2, tags: ['superhuman'] },
+  { id: 'llama3.3:70b', maxCtx: 131072, name: 'Llama 3.3 70B', maker: 'Meta', category: 'general', params: 70, ramNeeded: 44, multimodal: false, description: 'The absolute king of local models. True ChatGPT quality requiring massive workstation specs.', size: '43.0 GB', sizeBytes: 43000000000, minRAM: 32, recRAM: 64, speedApple: 4, speedIntel: 2, tags: ['king', 'workstation'] },
+  { id: 'deepseek-r1:70b', maxCtx: 131072, name: 'DeepSeek R1 70B', maker: 'DeepSeek', category: 'reasoning', params: 70, ramNeeded: 44, multimodal: false, description: 'The maximum capstone in open-source reasoning. 128K context with superhuman logic puzzle resolution.', size: '43.0 GB', sizeBytes: 43000000000, minRAM: 32, recRAM: 64, speedApple: 4, speedIntel: 2, tags: ['superhuman'] },
 ];
 
 // IDs of the 5 starter models shown on the first-run setup screen
@@ -8064,17 +9113,21 @@ async function setupStartDownload(tag) {
   document.getElementById('setupCancelDl').onclick = () => {
     controller.abort();
     // If cache mode was active, restore Ollama before going back
-    if (_setupState.installStrategy === 'cache' && window.electron && window.electron.invoke) {
+    if (_setupState.cacheActive) {
+      _setupState.cacheActive = false;
       window.electron.invoke('finish-cache-install').catch(() => { });
     }
     setupGotoStep(2);
   };
 
   try {
-    // Cache mode: redirect Ollama to write to local cache first
-    if (_setupState.installStrategy === 'cache' && window.electron && window.electron.invoke) {
-      document.getElementById('setupDlStats').textContent = 'Preparing cache…';
-      await window.electron.invoke('prepare-cache-install');
+    // Cache mode: redirect Ollama to write to the HOST cache first (falls
+    // back to direct when the host disk is too small — cacheActive tracks it)
+    _setupState.cacheActive = false;
+    if (_setupState.installStrategy === 'cache') {
+      _setupState.cacheActive = await beginCacheInstall(
+        (_setupState.selected && _setupState.selected.sizeBytes) || catalogSizeFor(tag),
+        s => { document.getElementById('setupDlStats').textContent = s; });
     }
 
     const r = await fetch(`${OLLAMA}/api/pull`, {
@@ -8089,8 +9142,8 @@ async function setupStartDownload(tag) {
     const reader = r.body.getReader();
     const dec = new TextDecoder();
     let buf = '';
-    let lastTime = Date.now();
-    let lastCompleted = 0;
+    const prog = newPullProgress(); // aggregate multi-layer progress
+    let lastDomUpdate = 0;
 
     while (true) {
       const { value, done } = await reader.read();
@@ -8103,37 +9156,19 @@ async function setupStartDownload(tag) {
         if (!line.trim()) continue;
         try {
           const obj = JSON.parse(line);
-          if (obj.total && obj.completed) {
-            const pct = Math.round((obj.completed / obj.total) * 100);
-            document.getElementById('setupProgressBar').style.width = `${pct}%`;
-            const dlMB = (obj.completed / (1024 ** 3)).toFixed(1);
-            const totalMB = (obj.total / (1024 ** 3)).toFixed(1);
-            document.getElementById('setupDlStats').textContent = `${dlMB} GB / ${totalMB} GB`;
-
-            // Speed calculation
-            const now = Date.now();
-            const dt = (now - lastTime) / 1000;
-            if (dt > 0.5) {
-              const bytesPerSec = (obj.completed - lastCompleted) / dt;
-              const speedMB = (bytesPerSec / (1024 ** 2)).toFixed(1);
-              document.getElementById('setupDlSpeed').textContent = `${speedMB} MB/s`;
-              const remaining = obj.total - obj.completed;
-              if (bytesPerSec > 0) {
-                const etaSec = Math.round(remaining / bytesPerSec);
-                const etaMin = Math.floor(etaSec / 60);
-                const etaS = etaSec % 60;
-                document.getElementById('setupDlEta').textContent = etaMin > 0 ? `~${etaMin}m ${etaS}s remaining` : `~${etaS}s remaining`;
-              }
-              lastTime = now;
-              lastCompleted = obj.completed;
-            }
-          } else if (obj.status) {
-            let statusText = obj.status;
-            if (statusText.toLowerCase().includes('verif')) statusText = 'Verifying…';
-            else if (statusText.toLowerCase().includes('extract') || statusText.toLowerCase().includes('writing')) statusText = 'Finalizing…';
-            document.getElementById('setupDlStats').textContent = statusText;
+          if (obj.error) throw new Error(obj.error);
+          const p = prog.feed(obj);
+          const now = Date.now();
+          if (now - lastDomUpdate >= 150 || p.percent >= 100 || p.phase !== 'downloading') {
+            lastDomUpdate = now;
+            document.getElementById('setupProgressBar').style.width = `${p.phase === 'verifying' || p.phase === 'finalizing' ? 100 : p.percent}%`;
+            document.getElementById('setupDlStats').textContent = p.label;
+            document.getElementById('setupDlSpeed').textContent = p.speedText;
+            document.getElementById('setupDlEta').textContent = p.etaText;
           }
-        } catch (_) { /* ignore parse errors */ }
+        } catch (err) {
+          if (err.message && !err.message.includes('JSON')) throw err;
+        }
       }
     }
 
@@ -8142,9 +9177,10 @@ async function setupStartDownload(tag) {
     document.getElementById('setupDlSpeed').textContent = '';
     document.getElementById('setupDlEta').textContent = '';
 
-    // Cache mode: move files from cache to portable drive
-    if (_setupState.installStrategy === 'cache' && window.electron && window.electron.invoke) {
-      document.getElementById('setupDlStats').textContent = 'Moving files to portable drive…';
+    // Cache mode: move files from the host cache to the portable drive
+    if (_setupState.cacheActive) {
+      _setupState.cacheActive = false;
+      document.getElementById('setupDlStats').textContent = 'Moving to your drive…';
       await window.electron.invoke('finish-cache-install');
     }
 
@@ -8154,7 +9190,8 @@ async function setupStartDownload(tag) {
 
   } catch (e) {
     // If cache mode was active, try to restore
-    if (_setupState.installStrategy === 'cache' && window.electron && window.electron.invoke) {
+    if (_setupState.cacheActive) {
+      _setupState.cacheActive = false;
       try { await window.electron.invoke('finish-cache-install'); } catch (_) { }
     }
     if (controller.signal.aborted) return; // user cancelled
@@ -8824,19 +9861,12 @@ const ModelStore = {
     SharedInstallState.register(id, id, 'store', 'downloading');
     this.render(); // Show progress bar UI
 
+    let cacheActive = false;
     try {
-      const isCacheMode = settings.installMode === 'cache';
-      if (isCacheMode && window.electron && window.electron.invoke) {
-        // Snapshot installed models before Ollama restarts on empty cache dir
-        if (!_cacheInstallActive) {
-          try {
-            const snap = await fetch(`${OLLAMA}/api/tags`);
-            if (snap.ok) { _preCacheModelsList = (await snap.json()).models || []; }
-          } catch (_) { }
-          _cacheInstallActive = true;
-        }
-        await window.electron.invoke('prepare-cache-install');
-        refreshOllamaPort();
+      if (settings.installMode === 'cache') {
+        cacheActive = await beginCacheInstall(
+          (m && m.sizeBytes) || catalogSizeFor(id),
+          s => updateDownloadToast(id, m ? m.name : id, 0, 'starting', '', '', s));
       }
 
       const r = await fetch(`${OLLAMA}/api/pull`, {
@@ -8858,11 +9888,8 @@ const ModelStore = {
       const reader = r.body.getReader();
       const decoder = new TextDecoder();
 
-      let lastBytes = 0;
-      let lastTime = Date.now();
       let buffer = '';
-      let speedText = '';
-      let etaText = '';
+      const prog = newPullProgress(); // aggregate multi-layer progress
       let lastDomUpdate = 0;   // throttle per-line DOM work (pull emits many lines/sec)
 
       while (true) {
@@ -8892,49 +9919,20 @@ const ModelStore = {
               throw new Error(data.error);
             }
 
-            // Inline progress bar (only when store is open)
-            const bar = document.getElementById(`ms-prog-${id.replace(':', '-')}`);
-            const pct = document.getElementById(`ms-pct-${id.replace(':', '-')}`);
-
-            if (data.total !== undefined && data.completed !== undefined) {
-              const percent = Math.floor((data.completed / data.total) * 100);
-
-              // Speed & ETA calculation
-              const now = Date.now();
-              const skipDom = (now - lastDomUpdate) < 150 && percent < 100;
-              const dt = (now - lastTime) / 1000;
-              if (dt > 0.3) {
-                const bytesPerSec = (data.completed - lastBytes) / dt;
-                lastBytes = data.completed;
-                lastTime = now;
-                if (bytesPerSec > 0) {
-                  const mbps = (bytesPerSec / 1e6).toFixed(1);
-                  speedText = `${mbps} MB/s`;
-                  const remaining = data.total - data.completed;
-                  const secsLeft = Math.ceil(remaining / bytesPerSec);
-                  if (secsLeft < 60) etaText = `${secsLeft}s left`;
-                  else if (secsLeft < 3600) etaText = `${Math.ceil(secsLeft / 60)}m left`;
-                  else etaText = `${Math.floor(secsLeft / 3600)}h ${Math.ceil((secsLeft % 3600) / 60)}m left`;
-                }
+            // Aggregate multi-layer progress → friendly label, never digests
+            const p = prog.feed(data);
+            const now = Date.now();
+            if (now - lastDomUpdate >= 150 || p.percent >= 100 || p.phase !== 'downloading') {
+              lastDomUpdate = now;
+              const bar = document.getElementById(`ms-prog-${id.replace(':', '-')}`);
+              const pct = document.getElementById(`ms-pct-${id.replace(':', '-')}`);
+              if (bar) bar.style.width = (p.phase === 'verifying' || p.phase === 'finalizing' ? 100 : p.percent) + '%';
+              if (pct) {
+                pct.textContent = p.phase === 'verifying' ? 'Verifying…'
+                  : p.phase === 'finalizing' ? 'Finalizing…'
+                    : p.hasBytes ? p.percent + '%' : 'Starting…';
               }
-
-              if (!skipDom) {
-                lastDomUpdate = now;
-                if (bar) bar.style.width = percent + '%';
-                if (pct) pct.textContent = percent + '%';
-                updateDownloadToast(id, m ? m.name : id, percent, 'downloading', speedText, etaText, data.status);
-              }
-            } else if (data.status === 'pulling manifest') {
-              if (pct) pct.textContent = 'Starting...';
-              updateDownloadToast(id, m ? m.name : id, 0, 'starting', '', '', data.status);
-            } else if (data.status === 'verifying sha256 digest') {
-              if (bar) bar.style.width = '100%';
-              if (pct) pct.textContent = 'Verifying...';
-              updateDownloadToast(id, m ? m.name : id, 100, 'verifying', '', '', data.status);
-            } else if (data.status) {
-              // Catch-all for "pulling layers" before byte data comes in
-              if (pct) pct.textContent = 'Preparing...';
-              updateDownloadToast(id, m ? m.name : id, 0, 'starting', '', '', data.status);
+              updateDownloadToast(id, m ? m.name : id, p.percent, p.phase === 'starting' ? 'starting' : p.phase, p.speedText, p.etaText, p.label);
             }
           } catch (err) {
             if (err.message && !err.message.includes('Unexpected')) throw err;
@@ -8942,11 +9940,13 @@ const ModelStore = {
         }
       }
 
-      if (isCacheMode && window.electron && window.electron.invoke) {
+      if (cacheActive) {
         const pct = document.getElementById(`ms-pct-${id.replace(':', '-')}`);
         if (pct) pct.textContent = 'Moving...';
+        updateDownloadToast(id, m ? m.name : id, 100, 'moving', '', '', 'Moving to drive…');
         await window.electron.invoke('finish-cache-install');
         refreshOllamaPort();
+        cacheActive = false;
         _cacheInstallActive = false;
         _preCacheModelsList = [];
       }
@@ -8997,7 +9997,8 @@ const ModelStore = {
       // Ensure UI is reset and download state is cleared even if there's an error or abort
       delete this.state.downloading[id];
       SharedInstallState.unregister(id);
-      if (settings.installMode === 'cache' && window.electron && window.electron.invoke) {
+      if (cacheActive) {
+        // Error/abort with cache mode still active — restore Ollama to the drive
         try { await window.electron.invoke('finish-cache-install'); } catch (_) { }
         _cacheInstallActive = false;
         _preCacheModelsList = [];
@@ -9145,6 +10146,15 @@ async function init() {
   // Fire-and-forget: sweep image blobs orphaned by deleted chats/failed sends.
   IDBStore.gcImages(conversations);
 
+  // Projects/skills mirror to IDB kv — adopt IDB copies if localStorage was
+  // cleared (same durability story as conversations).
+  try {
+    const idbProjects = await IDBStore.loadKV('projects');
+    if (Array.isArray(idbProjects) && idbProjects.length && projects.length === 0) projects = idbProjects;
+    const idbSkills = await IDBStore.loadKV('skills');
+    if (Array.isArray(idbSkills) && idbSkills.length && (!skills.length || skills === DEFAULT_SKILLS)) skills = idbSkills;
+  } catch { }
+
   ui = {
     appGrid: $('#appGrid'),
     sidebar: $('#sidebar'), sbToggle: $('#sbToggle'),
@@ -9253,14 +10263,18 @@ async function init() {
     const maxRetryDelay = 10000; // Max 10s
 
     while (true) {
+      // While a model install is running, Ollama legitimately answers slowly
+      // (or is being restarted for cache mode). Don't flap the status bar red
+      // — show a neutral "Installing…" state and poll gently.
+      const installing = SharedInstallState.isAnyDownloading() || _cacheInstallActive;
       refreshOllamaPort();
       // If we don't yet have a confirmed connection, (re)scan the port range
       // so we recover if Ollama came up on a different port than expected.
-      if (!wasConnected) { try { await resolveOllamaPort(); } catch { } }
+      if (!wasConnected && !installing) { try { await resolveOllamaPort(); } catch { } }
       try {
         const r = await fetch(`${OLLAMA}/api/tags`, {
           method: 'GET',
-          signal: AbortSignal.timeout(5000) // 5s timeout
+          signal: AbortSignal.timeout(installing ? 10000 : 5000)
         });
         if (r.ok) {
           const data = await r.json();
@@ -9282,11 +10296,17 @@ async function init() {
           throw new Error('Status ' + r.status);
         }
       } catch (e) {
-        wasConnected = false;
-        ui.updateStatusBar(false, 0);
-        console.log('Ollama connection failed, retrying in ' + (retryDelay / 1000) + 's...');
-        // Exponential backoff
-        retryDelay = Math.min(retryDelay * 1.5, maxRetryDelay);
+        if (installing) {
+          // Keep the last state; just relabel so the user knows why
+          if (ui.statusText) ui.statusText.textContent = 'Installing model…';
+          retryDelay = 15000;
+        } else {
+          wasConnected = false;
+          ui.updateStatusBar(false, 0);
+          console.log('Ollama connection failed, retrying in ' + (retryDelay / 1000) + 's...');
+          // Exponential backoff
+          retryDelay = Math.min(retryDelay * 1.5, maxRetryDelay);
+        }
       }
       await new Promise(r => setTimeout(r, retryDelay));
     }
@@ -9310,14 +10330,10 @@ async function init() {
       }
     }
 
-    // The onboarding screen should ONLY appear in an absolutely empty chat when NO models exist
-    if (!hasModels && isCurrentChatEmpty) {
-      ui.onboarding.style.display = 'block';
-      ui.obModelSection.style.display = 'none';
-      ui.obInstallBtn.style.display = 'block';
-    } else {
-      ui.onboarding.style.display = 'none';
-    }
+    // The install hero renders INLINE in the welcome screen now — the
+    // floating panel stays hidden permanently (it used to overlap the tiles).
+    ui.onboarding.style.display = 'none';
+    if (isCurrentChatEmpty) renderMessages(false); // refresh the welcome hero
   };
 
   if (ui.obModelSelect) {
@@ -9544,41 +10560,75 @@ async function init() {
   // Context length selector
   const ctxSelect = document.getElementById('contextLengthSelect');
   if (ctxSelect) {
-    const ctxVal = String(settings.contextLength || 4096);
-    // A hand-edited settings file may hold a value outside the preset list —
-    // surface it as a real option instead of showing a blank select.
-    if (![...ctxSelect.options].some(o => o.value === ctxVal)) {
-      const opt = document.createElement('option');
-      opt.value = ctxVal;
-      opt.textContent = `${Number(ctxVal).toLocaleString()} tokens (custom)`;
-      ctxSelect.appendChild(opt);
-    }
-    ctxSelect.value = ctxVal;
+    // Model-aware options: Auto + presets capped at the active model's real
+    // context window (maxCtx from the catalog).
+    window.rebuildCtxOptions = () => {
+      const max = modelMaxCtx(activeModelName());
+      const presets = [2048, 4096, 8192, 16384, 32768, 65536, 131072].filter(v => v <= max);
+      if (!presets.includes(max)) presets.push(max); // offer the exact model max too
+      const cur = String(settings.contextLength || 'auto');
+      ctxSelect.innerHTML = '';
+      const auto = document.createElement('option');
+      auto.value = 'auto';
+      auto.textContent = `Auto — recommended (${Math.min(8192, max).toLocaleString()} tokens)`;
+      ctxSelect.appendChild(auto);
+      for (const v of presets) {
+        const o = document.createElement('option');
+        o.value = String(v);
+        o.textContent = `${v.toLocaleString()} tokens${v === max ? ' (model max)' : ''}`;
+        ctxSelect.appendChild(o);
+      }
+      // A hand-edited settings file may hold a value outside the presets —
+      // surface it instead of showing a blank select.
+      if (cur !== 'auto' && ![...ctxSelect.options].some(o => o.value === cur)) {
+        const opt = document.createElement('option');
+        opt.value = cur;
+        opt.textContent = `${Number(cur).toLocaleString()} tokens (custom)`;
+        ctxSelect.appendChild(opt);
+      }
+      ctxSelect.value = cur;
+      if (ctxSelect.selectedIndex < 0) ctxSelect.value = 'auto';
+    };
+    rebuildCtxOptions();
     ctxSelect.addEventListener('change', () => {
-      settings.contextLength = parseInt(ctxSelect.value, 10);
+      settings.contextLength = ctxSelect.value === 'auto' ? 'auto' : parseInt(ctxSelect.value, 10);
       jsave(KEYS.settings, settings);
       persistUiSettings();
+      try { updateContextMeter(); } catch { }
     });
   }
 
   if (ui.send) ui.send.addEventListener('click', sendPrompt);
   if (ui.stop) ui.stop.addEventListener('click', stopStream);
   // ui.regen removed - regenerate now in message hover menu
-  if (ui.prompt) ui.prompt.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); } });
+  if (ui.prompt) ui.prompt.addEventListener('keydown', e => {
+    // Skill menu takes Enter/Tab while open (completes the top match)
+    if (skillMenuOpen()) {
+      if (e.key === 'Escape') { hideSkillMenu(); return; }
+      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); applyFirstSkill(); return; }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); }
+  });
+  if (ui.prompt) ui.prompt.addEventListener('input', () => {
+    const v = ui.prompt.value;
+    if (v.startsWith('/') && !v.includes('\n') && v.length <= 40) showSkillMenu(v.slice(1).split(' ')[0]);
+    else hideSkillMenu();
+  });
+  if (ui.prompt) ui.prompt.addEventListener('blur', () => setTimeout(hideSkillMenu, 150));
 
   // --- Vision chat ingest: attach button, paste, window drag-drop ---
   const attachBtn = document.getElementById('attachBtn');
   const attachInput = document.getElementById('attachInput');
   if (attachBtn && attachInput) {
-    attachBtn.addEventListener('click', () => {
-      const gate = visionGate();
-      if (!gate.ok) { showToast(gate.msg, 'warning'); return; }
-      attachInput.click();
-    });
+    // Documents work with any model; the vision gate applies to IMAGES only
+    // (checked inside addAttachment).
+    attachBtn.addEventListener('click', () => attachInput.click());
     attachInput.addEventListener('change', async () => {
       const f = attachInput.files && attachInput.files[0];
       attachInput.value = '';
-      if (f) await addAttachment(f);
+      if (!f) return;
+      if (isDocFile(f)) await addDocument(f);
+      else await addAttachment(f);
     });
   }
   if (ui.prompt) ui.prompt.addEventListener('paste', async (e) => {
@@ -9602,7 +10652,9 @@ async function init() {
     dragDepth = 0;
     showDropOverlay(false);
     const f = e.dataTransfer?.files?.[0];
-    if (f) await addAttachment(f);
+    if (!f) return;
+    if (isDocFile(f)) await addDocument(f);
+    else await addAttachment(f);
   });
 
   // Prompt 4: Memory Store
@@ -10166,8 +11218,188 @@ async function init() {
         }
       };
 
+      // --- Manual add / import / export ---
+      const memAddForm = document.getElementById('memAddForm');
+      const memAddBtn = document.getElementById('memAddBtn');
+      if (memAddBtn) memAddBtn.onclick = () => {
+        memAddForm.style.display = memAddForm.style.display === 'none' ? 'block' : 'none';
+        if (memAddForm.style.display === 'block') document.getElementById('memAddKey').focus();
+      };
+      const memAddCancel = document.getElementById('memAddCancel');
+      if (memAddCancel) memAddCancel.onclick = () => { memAddForm.style.display = 'none'; };
+      const memAddSave = document.getElementById('memAddSave');
+      if (memAddSave) memAddSave.onclick = () => {
+        const key = document.getElementById('memAddKey').value.trim().toLowerCase().replace(/\s+/g, '_');
+        const text = document.getElementById('memAddText').value.trim();
+        const category = document.getElementById('memAddCategory').value;
+        if (!text) { showToast('Write the fact to remember first.', 'warning'); return; }
+        MemoryStore.addMemory({ key: key || text.slice(0, 24).toLowerCase().replace(/\s+/g, '_'), category, text });
+        document.getElementById('memAddKey').value = '';
+        document.getElementById('memAddText').value = '';
+        memAddForm.style.display = 'none';
+        renderMemoryList(document.getElementById('memorySearch')?.value || '');
+        showToast('Memory added.', 'success');
+      };
+      const memExportBtn = document.getElementById('memExportBtn');
+      if (memExportBtn) memExportBtn.onclick = () => {
+        const payload = JSON.stringify({ portableai_memories: 1, exported: new Date().toISOString(), items: MemoryStore.items }, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'portableai-memories.json'; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
+      const memImportBtn = document.getElementById('memImportBtn');
+      const memImportFile = document.getElementById('memImportFile');
+      if (memImportBtn && memImportFile) {
+        memImportBtn.onclick = () => memImportFile.click();
+        memImportFile.onchange = async () => {
+          const f = memImportFile.files && memImportFile.files[0];
+          memImportFile.value = '';
+          if (!f) return;
+          try {
+            const parsed = JSON.parse(await f.text());
+            const items = Array.isArray(parsed) ? parsed : (parsed.items || []);
+            let added = 0, updated = 0, skipped = 0;
+            for (const it of items) {
+              if (!it || typeof it.text !== 'string' || !it.text.trim()) { skipped++; continue; }
+              const key = String(it.key || it.text.slice(0, 24)).toLowerCase().replace(/\s+/g, '_');
+              const existing = MemoryStore.items.find(m => m.key === key);
+              if (existing) {
+                if (existing.text !== it.text.trim()) { MemoryStore.manualUpdate(existing.id, it.text); updated++; }
+                else skipped++;
+              } else {
+                MemoryStore.addMemory({ key, category: it.category || 'other', text: it.text.trim() });
+                added++;
+              }
+            }
+            renderMemoryList(document.getElementById('memorySearch')?.value || '');
+            showToast(`Imported: ${added} added, ${updated} updated, ${skipped} skipped.`, 'success');
+          } catch (e) {
+            showToast('Import failed — the file is not valid memory JSON.', 'error');
+          }
+        };
+      }
+
       // Render Model Overrides (Placeholder for Prompt 2)
       ui.renderModelOverrides();
+      // Context options depend on the active model — rebuild on every open
+      if (window.rebuildCtxOptions) rebuildCtxOptions();
+
+      // Connector mode (OpenClaw / LAN / phone)
+      const connToggle = document.getElementById('connectorToggle');
+      const connCard = document.getElementById('connectorCard');
+      const renderConnectorCard = (info) => {
+        if (!info || !info.enabled) { connCard.style.display = 'none'; return; }
+        connCard.style.display = 'block';
+        const ip = info.lanIp || 'this-computer';
+        const webUrl = info.webPort ? `http://${ip}:${info.webPort}` : '(web UI port busy)';
+        const apiUrl = `http://${ip}:${info.ollamaPort}`;
+        document.getElementById('connWebUrl').textContent = webUrl;
+        document.getElementById('connApiUrl').textContent = apiUrl;
+        document.getElementById('connWorkspace').textContent = info.workspace || '';
+        const qrEl = document.getElementById('connectorQr');
+        try {
+          if (typeof qrcode === 'function' && info.webPort) {
+            const qr = qrcode(0, 'L');
+            qr.addData(webUrl);
+            qr.make();
+            qrEl.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0 });
+          } else qrEl.textContent = '';
+        } catch { qrEl.textContent = ''; }
+        const copyBtn = document.getElementById('copyOpenclawCfg');
+        copyBtn.onclick = () => {
+          const cfg = JSON.stringify({
+            provider: 'ollama',
+            baseUrl: apiUrl,
+            model: settings.model || 'your-model-tag',
+            note: 'Portable AI stick — enable Connectors in its settings while using this.',
+          }, null, 2);
+          navigator.clipboard.writeText(cfg);
+          showToast('OpenClaw provider config copied.', 'success');
+        };
+        const wsBtn = document.getElementById('openWorkspace');
+        if (wsBtn) wsBtn.style.display = '';
+      };
+      if (connToggle && window.electron && window.electron.invoke) {
+        window.electron.invoke('get-lan-info').then(info => {
+          connToggle.checked = !!(info && info.enabled);
+          renderConnectorCard(info);
+        }).catch(() => { });
+        connToggle.onchange = async () => {
+          connToggle.disabled = true;
+          try {
+            const info = await window.electron.invoke('connector-mode', { enable: connToggle.checked });
+            renderConnectorCard(info);
+            refreshOllamaPort();
+            showToast(connToggle.checked
+              ? 'Connector mode ON — devices on your network can now use this AI.'
+              : 'Connector mode off — back to this computer only.', 'info');
+          } catch (e) {
+            showToast('Could not change connector mode.', 'error');
+            connToggle.checked = !connToggle.checked;
+          }
+          connToggle.disabled = false;
+        };
+      } else if (connToggle) {
+        connToggle.disabled = true; // browser fallback: no main process
+      }
+
+      // Export-all + update check
+      const exportAllBtn = document.getElementById('exportAllBtn');
+      if (exportAllBtn) exportAllBtn.onclick = exportAllChats;
+      const updBtn = document.getElementById('checkUpdatesBtn');
+      if (updBtn) updBtn.onclick = async () => {
+        const out = document.getElementById('updateResult');
+        updBtn.disabled = true; updBtn.textContent = 'Checking…';
+        try {
+          if (!(window.electron && window.electron.invoke)) throw new Error('no bridge');
+          const r = await window.electron.invoke('check-updates');
+          const cmp = String(r.latest).localeCompare(String(r.current), undefined, { numeric: true });
+          if (cmp > 0) {
+            out.innerHTML = `New version <b>v${escapeHtml(r.latest)}</b> available — <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">get it here</a> (you're on v${escapeHtml(r.current)}).`;
+          } else {
+            out.textContent = `You're up to date (v${r.current}).`;
+          }
+        } catch (e) {
+          out.textContent = "Couldn't check — are you online?";
+        }
+        updBtn.disabled = false; updBtn.textContent = 'Check for updates';
+      };
+
+      // Skills manager
+      renderSkillList();
+      const skillAddBtn = document.getElementById('skillAddBtn');
+      const skillForm = document.getElementById('skillForm');
+      if (skillAddBtn) skillAddBtn.onclick = () => {
+        document.getElementById('skillFormId').value = '';
+        document.getElementById('skillFormName').value = '';
+        document.getElementById('skillFormDesc').value = '';
+        document.getElementById('skillFormTemplate').value = '';
+        skillForm.style.display = 'block';
+        document.getElementById('skillFormName').focus();
+      };
+      const skillFormCancel = document.getElementById('skillFormCancel');
+      if (skillFormCancel) skillFormCancel.onclick = () => { skillForm.style.display = 'none'; };
+      const skillFormSave = document.getElementById('skillFormSave');
+      if (skillFormSave) skillFormSave.onclick = () => {
+        const name = document.getElementById('skillFormName').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/^\//, '');
+        const template = document.getElementById('skillFormTemplate').value.trim();
+        if (!name || !template) { showToast('A skill needs a name and a template.', 'warning'); return; }
+        const editId = document.getElementById('skillFormId').value;
+        const existing = editId && skills.find(s => s.id === editId);
+        if (existing) {
+          existing.name = name;
+          existing.description = document.getElementById('skillFormDesc').value.trim();
+          existing.template = template;
+        } else {
+          if (skills.some(s => s.name === name)) { showToast(`A /${name} skill already exists.`, 'warning'); return; }
+          skills.push({ id: uid(), name, description: document.getElementById('skillFormDesc').value.trim(), template });
+        }
+        saveSkills(); renderSkillList();
+        skillForm.style.display = 'none';
+        showToast(`Skill /${name} saved.`, 'success');
+      };
 
       ui.modal.style.display = 'flex';
       ui.modal.setAttribute('aria-hidden', 'false');
@@ -10175,6 +11407,12 @@ async function init() {
   }
   if (ui.settingsBtn) {
     ui.settingsBtn.onclick = ui.openSettings.onclick;
+  }
+  // Workspace browser (Electron only)
+  const wsBtn = document.getElementById('openWorkspace');
+  if (wsBtn && window.electron && window.electron.invoke) {
+    wsBtn.style.display = '';
+    wsBtn.onclick = openWorkspaceView;
   }
   if (ui.closeSettings) {
     ui.closeSettings.onclick = () => {
@@ -10675,7 +11913,8 @@ async function init() {
 if (window.electron && window.electron.on) {
   window.electron.on('cache-move-progress', ({ label, index, total, percent }) => {
     const pctStr = percent !== undefined ? ` — ${percent}%` : '';
-    const text = `Moving files\u2026 (${label} ${index}/${total}${pctStr})`;
+    const kind = label === 'blobs' ? 'model data' : label;
+    const text = `Moving to drive \u2014 ${kind} ${index}/${total}${pctStr}`;
 
     const jobs = document.querySelectorAll('.install-job.state-progress .note');
     jobs.forEach(n => n.textContent = text);

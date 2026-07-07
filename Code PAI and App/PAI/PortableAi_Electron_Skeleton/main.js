@@ -553,7 +553,10 @@ async function ensureEmbeddedOllama(customModelsPath = null) {
     }
 
     // The three vars Ollama actually needs from us.
-    env.OLLAMA_HOST = `127.0.0.1:${OLLAMA_PORT}`;
+    // Connector mode (explicit opt-in) binds to the LAN so OpenClaw/other
+    // devices — including the phone UI — can reach the model; otherwise
+    // strictly loopback.
+    env.OLLAMA_HOST = `${connectorMode ? '0.0.0.0' : '127.0.0.1'}:${OLLAMA_PORT}`;
     env.OLLAMA_MODELS = EFFECTIVE_MODELS_DIR; // keeps model blobs on the stick, not the OS drive
     env.OLLAMA_KEEP_ALIVE = '-1';             // keep models resident until app exit
     // Allow only the origins our Electron renderer can present (it sends
@@ -561,7 +564,9 @@ async function ensureEmbeddedOllama(customModelsPath = null) {
     // any website the user visits drive the local API. NOTE: Ollama v0.21.2
     // panicked at boot if "null" appeared in this list; v0.31.1 tolerates it
     // (retested 2026-07-03). We still leave it out — nothing we ship needs it.
-    env.OLLAMA_ORIGINS = 'file://*,app://*,http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*';
+    // In connector mode the phone/OpenClaw origins are unknowable up front,
+    // so it widens to '*' FOR THE OPT-IN SESSION ONLY (documented in the UI).
+    env.OLLAMA_ORIGINS = connectorMode ? '*' : 'file://*,app://*,http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*';
 
     // Ollama has no config-dir env var: it derives ~/.ollama (keys, request
     // history) from the OS home dir. Point the CHILD's home at the stick so
@@ -869,6 +874,34 @@ function validateCatalogPayload(data) {
   return models.length ? models : null;
 }
 
+// IPC: explicit user-triggered update check (pinned domain, main process
+// only — same explicit-network pattern as the catalog refresh; never runs
+// automatically).
+ipcMain.handle('check-updates', async () => {
+  const body = await new Promise((resolve, reject) => {
+    const req = https.get('https://api.github.com/repos/isthatseyi/portable-ai/releases/latest',
+      { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'PortableAI' } }, res => {
+        if (res.statusCode !== 200) { res.resume(); return reject(new Error(`HTTP ${res.statusCode}`)); }
+        let buf = '';
+        res.setEncoding('utf8');
+        res.on('data', d => {
+          buf += d;
+          if (buf.length > 1024 * 1024) req.destroy(new Error('response too large'));
+        });
+        res.on('end', () => resolve(buf));
+      });
+    req.setTimeout(10000, () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+  });
+  const rel = JSON.parse(body);
+  return {
+    current: app.getVersion(),
+    latest: String(rel.tag_name || '').replace(/^v/, ''),
+    url: typeof rel.html_url === 'string' ? rel.html_url : 'https://github.com/isthatseyi/portable-ai/releases',
+    name: typeof rel.name === 'string' ? rel.name : '',
+  };
+});
+
 // IPC: read the cached catalog (offline; null when never refreshed)
 ipcMain.handle('get-model-catalog', async () => {
   try {
@@ -1059,18 +1092,166 @@ ipcMain.handle('set-models-dir', async (event, dirPath) => {
   return true;
 });
 
+// ---------- Connector mode (OpenClaw / LAN access / phone UI) ----------
+// Explicit opt-in: binds Ollama to 0.0.0.0, serves the web UI over HTTP for
+// phones, and exposes a workspace folder on the drive. Persisted in config.
+let connectorMode = false;
+let webServer = null;
+let WEB_PORT = 0;
+const WORKSPACE_DIR = path.join(PORTABLE_ROOT, 'workspace');
+
+function lanIPv4() {
+  try {
+    const ifs = require('os').networkInterfaces();
+    for (const name of Object.keys(ifs)) {
+      for (const i of ifs[name] || []) {
+        if (i.family === 'IPv4' && !i.internal) return i.address;
+      }
+    }
+  } catch { }
+  return null;
+}
+
+function stopWebServer() {
+  if (webServer) { try { webServer.close(); } catch { } webServer = null; WEB_PORT = 0; }
+}
+
+function startWebServer() {
+  stopWebServer();
+  const http = require('http');
+  const webuiDir = path.join(__dirname, 'webui');
+  const MIME = { html: 'text/html', mjs: 'text/javascript', js: 'text/javascript', css: 'text/css', png: 'image/png', svg: 'image/svg+xml' };
+  webServer = http.createServer((req, res) => {
+    try {
+      let p = decodeURIComponent((req.url || '/').split('?')[0]);
+      if (p === '/' || p === '/index.html') {
+        // Inject the Ollama port so the phone UI talks to the right server
+        let html = fs.readFileSync(path.join(webuiDir, 'index.html'), 'utf8');
+        html = html.replace('<head>', `<head><script>window.__OLLAMA_PORT=${OLLAMA_PORT};</script>`);
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(html);
+      }
+      // Static files (vendor/ only) with traversal guard
+      const safe = path.normalize(p).replace(/^([/\\])+/, '');
+      const full = path.join(webuiDir, safe);
+      if (!full.startsWith(webuiDir) || !safe.startsWith('vendor')) {
+        res.writeHead(404); return res.end('not found');
+      }
+      if (!fs.existsSync(full)) { res.writeHead(404); return res.end('not found'); }
+      const ext = full.split('.').pop().toLowerCase();
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      fs.createReadStream(full).pipe(res);
+    } catch (e) {
+      try { res.writeHead(500); res.end('error'); } catch { }
+    }
+  });
+  WEB_PORT = 11500;
+  webServer.on('error', () => { logLine('[PortableAI] Web server port busy; phone UI disabled.'); webServer = null; WEB_PORT = 0; });
+  webServer.listen(WEB_PORT, '0.0.0.0', () => logLine(`[PortableAI] Connector web UI on 0.0.0.0:${WEB_PORT}`));
+}
+
+async function setConnectorMode(enable) {
+  connectorMode = !!enable;
+  const cfg = loadConfig();
+  cfg.connectorMode = connectorMode;
+  saveConfig(cfg);
+  if (connectorMode) {
+    ensureDir(WORKSPACE_DIR);
+    startWebServer();
+  } else {
+    stopWebServer();
+  }
+  // Rebind Ollama with the new host scope
+  const dest = cfg.customModelsPath || DEFAULT_MODELS_DIR;
+  await ensureEmbeddedOllama(dest);
+  logLine(`[PortableAI] Connector mode ${connectorMode ? 'ENABLED (LAN)' : 'disabled (loopback only)'}.`);
+  return connectorInfo();
+}
+
+function connectorInfo() {
+  return {
+    enabled: connectorMode,
+    lanIp: lanIPv4(),
+    ollamaPort: OLLAMA_PORT,
+    webPort: WEB_PORT,
+    workspace: WORKSPACE_DIR,
+  };
+}
+
+ipcMain.handle('connector-mode', async (_e, opts) => setConnectorMode(opts && opts.enable));
+ipcMain.handle('get-lan-info', async () => connectorInfo());
+
+// Workspace: read-only browsing of <root>/workspace (cowork-style surface
+// for files that agents/other tools drop on the drive).
+ipcMain.handle('workspace-list', async () => {
+  try {
+    ensureDir(WORKSPACE_DIR);
+    const out = [];
+    const walk = (dir, rel, depth) => {
+      if (depth > 3 || out.length >= 500) return;
+      for (const name of fs.readdirSync(dir)) {
+        if (name.startsWith('.')) continue;
+        const full = path.join(dir, name);
+        const st = fs.statSync(full);
+        const relPath = rel ? `${rel}/${name}` : name;
+        if (st.isDirectory()) walk(full, relPath, depth + 1);
+        else out.push({ path: relPath, size: st.size, mtime: st.mtimeMs });
+      }
+    };
+    walk(WORKSPACE_DIR, '', 0);
+    return out;
+  } catch (e) {
+    logLine(`[PortableAI] workspace-list error: ${e.message}`);
+    return [];
+  }
+});
+
+ipcMain.handle('workspace-read', async (_e, relPath) => {
+  try {
+    const full = path.resolve(WORKSPACE_DIR, String(relPath || ''));
+    if (!full.startsWith(path.resolve(WORKSPACE_DIR))) return null; // traversal guard
+    const st = fs.statSync(full);
+    if (st.size > 1024 * 1024) return { tooBig: true, size: st.size };
+    return { text: fs.readFileSync(full, 'utf8'), size: st.size };
+  } catch (e) {
+    return null;
+  }
+});
+
 // IPC: Cache & Move Install Strategy
 let isCacheMode = false;
-const CACHE_DIR = path.join(app.getPath('temp'), 'portableai_install_cache');
+// CRITICAL: use the REAL host temp dir (os.tmpdir), NOT app.getPath('temp') —
+// relocateElectronPaths() points the latter AT THE STICK, which silently
+// turned "download to fast host disk, then move" into "download to the slow
+// stick, then move it a few directories over". The whole point of cache mode
+// is that the download + sha verify run at host-SSD speed.
+const CACHE_DIR = path.join(require('os').tmpdir(), 'portableai_install_cache');
 
-ipcMain.handle('prepare-cache-install', async () => {
+// True free bytes on the host temp volume (Node's statfs — not the stick).
+function hostTempFreeBytes() {
+  try {
+    const s = fs.statfsSync(require('os').tmpdir());
+    return s.bavail * s.bsize;
+  } catch { return -1; } // unknown — caller decides
+}
+
+ipcMain.handle('prepare-cache-install', async (_e, opts) => {
+  const expectedBytes = (opts && opts.expectedBytes) || 0;
   logLine('[PortableAI] Preparing cache install...');
+  // Guard: if the host disk can't hold the model (+20% headroom for
+  // manifests/partials), fall back to direct-to-drive instead of filling
+  // the user's system disk.
+  const free = hostTempFreeBytes();
+  if (expectedBytes > 0 && free >= 0 && free < expectedBytes * 1.2) {
+    logLine(`[PortableAI] Host temp has ${(free / 1e9).toFixed(1)} GB free < needed ~${(expectedBytes * 1.2 / 1e9).toFixed(1)} GB — falling back to direct install.`);
+    return { mode: 'direct-fallback', reason: 'host-disk-space' };
+  }
   isCacheMode = true;
   try {
     await fse.ensureDir(CACHE_DIR);
     // Restart Ollama pointing to CACHE_DIR
     await ensureEmbeddedOllama(CACHE_DIR);
-    return true;
+    return { mode: 'cache', cacheDir: CACHE_DIR };
   } catch (e) {
     logLine(`[PortableAI] Prepare cache failed: ${e.message}`);
     isCacheMode = false;
@@ -1324,9 +1505,23 @@ function createStopScripts() {
 }
 
 app.whenReady().then(async () => {
+  // Dev runs (`npm start`) otherwise show the stock Electron dock icon —
+  // packaged builds get the icon from electron-builder config instead.
+  if (process.platform === 'darwin' && !app.isPackaged && app.dock) {
+    try { app.dock.setIcon(path.join(__dirname, 'build', 'PortableAi.iconset', 'icon_512x512.png')); } catch { }
+  }
+
   const cfg = loadConfig();
   const startPath = cfg.customModelsPath || DEFAULT_MODELS_DIR;
   logLine(`[PortableAI] App ready. Starting Ollama with models at: ${startPath}`);
+
+  // Restore connector mode (explicit opt-in, persisted in config)
+  if (cfg.connectorMode) {
+    connectorMode = true;
+    ensureDir(WORKSPACE_DIR);
+    startWebServer();
+    logLine('[PortableAI] Connector mode restored from config (LAN bind).');
+  }
 
   createStopScripts();
   await checkVCRuntime();

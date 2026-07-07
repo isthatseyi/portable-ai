@@ -13,6 +13,9 @@
 'use strict';
 
 const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
+// Dev runs (`npm start`) otherwise report "Electron" as the app name in
+// menus/notifications. The packaged app gets this from electron-builder.
+app.setName('PortableAI');
 const path = require('path');
 const fs = require('fs');
 const fse = require('fs-extra');
@@ -1534,7 +1537,11 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // Portable app: the window IS the app. The macOS keep-running convention
+  // would leave Ollama eating RAM invisibly after the user "closed" us (and
+  // in dev the leftover dock icon is a bare Electron that confuses people) —
+  // quit on every platform; 'will-quit' stops Ollama and cleans runtime.json.
+  app.quit();
 });
 
 app.on('will-quit', async () => {

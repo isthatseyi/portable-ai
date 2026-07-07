@@ -1211,8 +1211,11 @@ ipcMain.handle('workspace-list', async () => {
 
 ipcMain.handle('workspace-read', async (_e, relPath) => {
   try {
-    const full = path.resolve(WORKSPACE_DIR, String(relPath || ''));
-    if (!full.startsWith(path.resolve(WORKSPACE_DIR))) return null; // traversal guard
+    const base = path.resolve(WORKSPACE_DIR);
+    const full = path.resolve(base, String(relPath || ''));
+    // Traversal guard: require base + separator, or a bare-prefix match would
+    // also admit SIBLING dirs (e.g. <root>/workspace-private).
+    if (full !== base && !full.startsWith(base + path.sep)) return null;
     const st = fs.statSync(full);
     if (st.size > 1024 * 1024) return { tooBig: true, size: st.size };
     return { text: fs.readFileSync(full, 'utf8'), size: st.size };
@@ -1553,8 +1556,22 @@ app.whenReady().then(async () => {
   }
 
   createStopScripts();
-  await checkVCRuntime();
+
+  // CI smoke mode (PORTABLEAI_SMOKE=1): boot the embedded Ollama, poll until
+  // it answers, then exit 0/1 — no window, no dialogs. Lets the Windows CI
+  // runner boot-test the PACKAGED app (the developer is Mac-only).
+  const SMOKE = process.env.PORTABLEAI_SMOKE === '1';
+  if (!SMOKE) await checkVCRuntime(); // its dialog would hang a headless run
   await ensureEmbeddedOllama(startPath);
+  if (SMOKE) {
+    let ok = false;
+    for (let i = 0; i < 30 && !ok; i++) { ok = await isOllamaUp(1000); if (!ok) await sleep(1000); }
+    logLine(`[PortableAI] SMOKE result: ${ok ? 'PASS' : 'FAIL'} (port ${OLLAMA_PORT})`);
+    console.log(`PORTABLEAI_SMOKE_RESULT=${ok ? 'PASS' : 'FAIL'}`);
+    await stopEmbeddedOllama();
+    app.exit(ok ? 0 : 1);
+    return;
+  }
   createWindow();
 
   app.on('activate', () => {

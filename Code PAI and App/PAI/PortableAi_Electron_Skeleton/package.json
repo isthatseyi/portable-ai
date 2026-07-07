@@ -23,7 +23,7 @@
     "appId": "com.seyi.portableai",
     "productName": "PortableAI",
     "asar": true,
-    "compression": "store",
+    "compression": "normal",
     "afterPack": "scripts/afterpack-codesign.js",
     "files": [
       "main.js",

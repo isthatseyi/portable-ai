@@ -5862,7 +5862,14 @@ async function addDocument(file) {
     text = ext === 'pdf' ? await extractPdfText(file) : await file.text();
   } catch (e) {
     console.error('doc read failed', e);
-    showToast(`Couldn't read "${file.name}" — the format may be unsupported.`, 'error');
+    // Browsers block ES-module loads (pdf.js) from file:// pages, so PDF
+    // reading only works in the app / an http-served UI — not the
+    // double-click-index.html fallback.
+    if (location.protocol === 'file:' && (file.name || '').toLowerCase().endsWith('.pdf')) {
+      showToast(`PDF reading isn't available in browser-fallback mode (file://). Use the PortableAI app, or save the PDF as .txt and drop that instead.`, 'warning');
+    } else {
+      showToast(`Couldn't read "${file.name}" — the format may be unsupported.`, 'error');
+    }
     return;
   }
   text = String(text || '').slice(0, MAX_DOC_CHARS);
@@ -6027,7 +6034,10 @@ function showSkillMenu(filter) {
   _skillMenuEl.innerHTML = list.slice(0, 8).map(s =>
     `<div class="menuItem" data-skill="${s.id}"><span><b>/${escapeHtml(s.name)}</b></span><span style="color:var(--muted);font-size:11px;margin-left:10px">${escapeHtml(s.description || '')}</span></div>`).join('');
   const r = ui.prompt.getBoundingClientRect();
-  _skillMenuEl.style.cssText = `display:block;position:fixed;left:${Math.round(r.left)}px;bottom:${Math.round(innerHeight - r.top + 8)}px;min-width:280px;max-width:440px;z-index:8500`;
+  // top:auto is required — the shared .menu class sets `top: calc(100% + 4px)`,
+  // which for THIS position:fixed element resolves against the viewport and
+  // pins the menu just below the fold (invisible, height collapsed).
+  _skillMenuEl.style.cssText = `display:block;position:fixed;left:${Math.round(r.left)}px;top:auto;bottom:${Math.round(innerHeight - r.top + 8)}px;min-width:280px;max-width:440px;z-index:8500`;
 }
 function applySkill(id) {
   const s = skills.find(x => x.id === id); if (!s) return;
@@ -6359,6 +6369,10 @@ function md(markdown) {
 
   function renderInline(s) {
     return s
+      // Models frequently emit literal <br> for line breaks (esp. inside
+      // table cells); input is already HTML-escaped here, so un-escape just
+      // this one harmless tag instead of showing "&lt;br&gt;" as text.
+      .replace(/&lt;br\s*\/?\s*&gt;/gi, '<br>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/__(.*?)__/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')

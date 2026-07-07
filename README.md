@@ -22,21 +22,36 @@ Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgr
 
 ## Features
 
+### New in v1.2
+
+- **Projects** — group related conversations in the sidebar; each project can carry its own custom instructions and its own scoped memory
+- **Skills** — reusable slash-commands: type `/` in the composer to insert a prompt template (8 starters bundled); create, import, and export your own
+- **Chat with documents** — drag a PDF or text file into a conversation and ask about it; PDFs are parsed locally with a vendored pdf.js (no CDN), long documents are chunked and the most relevant sections are selected per question
+- **Vision chat** — attach, paste, or drop images and ask about them with a vision-capable model (e.g. Gemma 4 E2B); vision support is detected from model tags, and text-only models degrade gracefully
+- **Connector mode (phone access)** — one switch + a QR code lets your phone's browser chat with the laptop's AI over local Wi-Fi; includes an OpenClaw/API endpoint and a shared read-only `workspace/` folder. Never touches the internet.
+- **Model-aware context + token meter** — context length adapts to the selected model automatically, with a live in-composer meter showing how much you've used
+- **Thinking models** — reasoning output (DeepSeek-R1, Qwen 3, Gemma 4) is rolled up into a collapsible "Thought process" box
+- **Export everything** — one click exports all conversations as a zip; memory import/export as JSON
+- **Opt-in update check** — checks GitHub for a newer release only when you click, never automatically
+
+### Core
+
 - **Streaming chat** — real-time token-by-token rendering via Ollama's API, with per-message token count and tokens/sec
-- **Single-file UI** — the entire chat interface is one self-contained `index.html`; zero CDN or network dependencies
-- **Conversation history** — IndexedDB-backed storage with new/rename/delete, sorted by recent activity, survives cache clears
+- **Single-file UI** — the entire chat interface is one self-contained `index.html` (plus three vendored libraries in `webui/vendor/`); zero CDN or network dependencies
+- **Conversation history & search** — IndexedDB-backed storage with new/rename/delete and full-text search across conversations
 - **Markdown rendering** — headings, bold/italic, lists, blockquotes, tables, inline code
 - **Code syntax highlighting** — with a copy button on every code block
 - **Status bar** — live server dot, active model, last-response tokens/sec, and port
 - **Dark and light themes + 6 accent colors** — persisted across sessions
-- **Model selector & Model Store** — switch models mid-session; built-in browser for downloading models filtered by RAM tier, with progress and drive-space indicator
-- **Settings panel** — General, Chat & Generation, Models, Behavior & Personality, Memory, Model Overrides
-- **Temperature & context length controls** — Precise / Balanced / Creative presets; 2048–16384 token context
+- **Model selector & Model Store** — switch models mid-session; built-in browser for downloading models filtered by RAM tier, with aggregate progress (GB, speed, ETA) and drive-space indicator
+- **Host-cache installs** — model downloads stage on the host's fast disk and move to the stick once complete (spares USB write cycles; direct-to-stick mode available)
+- **Settings panel** — General, Chat & Behavior, Models, Data & Memory, Behavior & Personality, per-model overrides
+- **Temperature & context length controls** — Precise / Balanced / Creative presets; automatic or manual context length
 - **Personalization & memory** — system instructions, style/tone presets, opt-in cross-conversation memory with management UI
 - **First-run setup wizard** — hardware detection, model recommendation by RAM, guided download
 - **Full app migration** — copy the entire app (executables + models) to a new drive from within the UI
 - **Dynamic port scanning** — finds a free port in 11434–11440, or reuses an already-running Ollama
-- **Embedded Ollama lifecycle** — auto-start on launch, auto-stop on quit, macOS quarantine/Gatekeeper handling
+- **Embedded Ollama lifecycle** — auto-start on launch, auto-stop on quit (nothing left running in the background), macOS quarantine/Gatekeeper handling
 - **GPU acceleration** — full CUDA bundle on Windows (including RTX 50-series/Blackwell), Metal/MLX on Mac
 - **No junk on the host** — models, Electron caches, and app data all live on the drive (`OLLAMA_MODELS` + relocated `userData`)
 - **Export conversation as Markdown**, smart auto-scroll with "↓ New messages", auto-resizing input, keyboard shortcuts (`Cmd/Ctrl+B` sidebar, `Cmd/Ctrl+K` new chat, `Enter` send, `Shift+Enter` newline)
@@ -48,13 +63,21 @@ Every portable AI tool is locked to one platform. [OffGrid AI](https://www.offgr
 |-----------|------------|
 | ![Dark mode chat](screenshots/chat-response-dark.png) | ![Light mode chat](screenshots/chat-response-light.png) |
 
-| Settings (Chat & Generation) | Settings (Personality) |
-|------------------------------|------------------------|
-| ![Chat & Generation settings](screenshots/settings-chat-dark.png) | ![Personality settings in light mode](screenshots/settings-personality-light.png) |
+| Projects | Document Chat |
+|----------|---------------|
+| ![Projects grouping conversations in the sidebar](screenshots/projects-sidebar.png) | ![Chatting with a dropped text document](screenshots/document-chat.png) |
+
+| Skills ("/" commands) | Phone Access (Connector Mode) |
+|-----------------------|-------------------------------|
+| ![Slash-command skills menu in the composer](screenshots/skills-menu.png) | ![QR code for chatting from your phone](screenshots/connector-qr.png) |
 
 | Model Store | Model Selector |
 |-------------|----------------|
 | ![Model Store with RAM-based filtering](screenshots/model-store.png) | ![Inline model picker](screenshots/model-selector-closeup.png) |
+
+| Settings (Chat & Behavior) | Data & Memory |
+|----------------------------|---------------|
+| ![Chat & Behavior settings](screenshots/settings-chat-dark.png) | ![Data & Memory settings](screenshots/settings-memory.png) |
 
 | Code Highlighting | Personality (Dark) |
 |-------------------|--------------------|
@@ -217,6 +240,12 @@ The bundled Ollama is the **unmodified official release** (currently v0.31.1). `
 
 ## Verify Your Download
 
+SHA-256 checksums — v1.1.1 (GitHub release assets):
+
+- `PortableAI-1.1.1-mac-universal.zip`: 13c09283358115fea4effd6d5a26202a116f08370f2b683e4654dfa06971b82f
+- `PortableAI-1.1.1-win.zip`: 0d37940ac1b02c1d8084266746ac5e9780a9c679abde2cad46bb2d710177e703
+- `PortableAI.exe` (root launcher): db7c184954b85fcb45e149b889ede2b81a6c570880dde816101f7fd898e34313
+
 SHA-256 checksums — v1.1.0 (GitHub release assets):
 
 - `PortableAI-1.1.0-mac-universal.zip`: f18d60774bf71313aa4d92ec16ce8f847e081419b625b7e42bbcdb3ed782e012
@@ -272,14 +301,16 @@ If the app crashes or responses are garbled, the model is too large for availabl
 
 ## Roadmap
 
+- [x] Vision chat (image understanding) — v1.2
+- [x] Prompt library on the welcome screen — v1.2
+- [x] Conversation search — v1.2
+- [x] Document upload (RAG-lite) — v1.2
+- [x] Local-WiFi mobile access (QR code to phone browser) — v1.2
+- [ ] Phone chat history syncing to the drive (v1.3)
+- [ ] Smarter document retrieval (embeddings-based RAG, v1.3)
 - [ ] Linux support
-- [ ] Vision chat (image understanding)
-- [ ] Prompt library on the welcome screen
-- [ ] Conversation search
-- [ ] RAG / document upload
-- [ ] Local-WiFi mobile access (QR code to phone browser)
 - [ ] Voice input/output
-- [ ] Code signing & notarization
+- [ ] Code signing & notarization (in progress)
 
 ## License
 

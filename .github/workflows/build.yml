@@ -72,6 +72,27 @@ jobs:
         working-directory: ${{ env.APP_DIR }}
         run: npm run dist
 
+      # Boot-test the PACKAGED zip exactly as a user would run it: extract,
+      # launch PortableAI.exe with PORTABLEAI_SMOKE=1 (starts embedded Ollama,
+      # polls the API, exits 0/1 without opening a window). This is the
+      # project's only automated real-Windows test of the packaged app.
+      - name: Smoke-run packaged app (boot test)
+        shell: pwsh
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          $zip = Get-ChildItem dist/PortableAI-*-win.zip | Select-Object -First 1
+          $dest = Join-Path $env:RUNNER_TEMP "pai-smoke"
+          Expand-Archive -Path $zip.FullName -DestinationPath $dest -Force
+          $exe = Join-Path $dest "PortableAI.exe"
+          if (-not (Test-Path $exe)) { throw "PortableAI.exe not found at zip root" }
+          $env:PORTABLEAI_SMOKE = "1"
+          $p = Start-Process -FilePath $exe -PassThru -NoNewWindow
+          if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force; throw "packaged smoke run timed out after 180s" }
+          $log = Join-Path $dest "app_data/data/ollama.log"
+          if (Test-Path $log) { Write-Host "--- ollama.log tail ---"; Get-Content $log -Tail 40 }
+          if ($p.ExitCode -ne 0) { throw "packaged smoke run FAILED (exit $($p.ExitCode))" }
+          Write-Host "Packaged smoke test PASSED"
+
       # --- Azure Trusted Signing (enable once the cert profile exists) ---
       # Signing must happen on the unpacked exes BEFORE electron-builder zips
       # them, so the real integration point is electron-builder's win.sign

@@ -240,10 +240,17 @@ The bundled Ollama is the **unmodified official release** (currently v0.31.1). `
 
 ## Verify Your Download
 
+SHA-256 checksums — v1.2.0 (GitHub release assets):
+
+- `PortableAI-1.2.0-mac-universal.zip`: 4bc50db20614f93bfaa4ab386441dad816f20907c3de8ceccb53f1c778e86f75
+- `PortableAI-1.2.0-win.zip`: 90732e37d60162bf547d38dca501c1f831a8370d09e5d58f85568f484c44f83f
+- `PortableAI.exe` (root launcher): 396fee8b8afb6deced3c267d688e017230a36e0d37c4019d4fcdd2002da5b3d0
+
 SHA-256 checksums — v1.1.1 (GitHub release assets):
 
 - `PortableAI-1.1.1-mac-universal.zip`: 13c09283358115fea4effd6d5a26202a116f08370f2b683e4654dfa06971b82f
 - `PortableAI-1.1.1-win.zip`: 0d37940ac1b02c1d8084266746ac5e9780a9c679abde2cad46bb2d710177e703
+- `PortableAI.exe` (root launcher): db7c184954b85fcb45e149b889ede2b81a6c570880dde816101f7fd898e34313
 - `PortableAI.exe` (root launcher): db7c184954b85fcb45e149b889ede2b81a6c570880dde816101f7fd898e34313
 
 SHA-256 checksums — v1.1.0 (GitHub release assets):

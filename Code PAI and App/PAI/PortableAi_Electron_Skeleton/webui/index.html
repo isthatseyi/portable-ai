@@ -7644,9 +7644,31 @@ async function streamReplyFrom(conv, uIdx, opts = {}) {
     PromptStateManager.update('loading', { model });
     // First-token watchdog: a wedged/overloaded server must never leave the
     // chat on "waiting for response" forever (covers the connect AND stream).
-    var watchdog = setTimeout(() => {
-      if (!gotFirstToken) { timedOut = true; try { controller.abort(); } catch { } }
-    }, 180000);
+    // BUT a big model cold-loading from a USB stick legitimately needs more
+    // than 3 minutes (7 GB at USB2 speeds ≈ 5 min), and aborting CANCELS the
+    // server-side load — retries then start from zero and can never succeed.
+    // So at the 3-min mark we abort only if the server itself is unresponsive;
+    // if it's alive (still loading), we tell the user and allow 10 min total.
+    // NOTE: no "is the server alive" ping here — while Ollama loads tensors
+    // it stalls or 5xx's even /api/version, so a busy-loading server is
+    // indistinguishable from a wedged one. The extension is unconditional:
+    // a truly dead server costs one long wait instead of stranding big
+    // models forever (the status-bar poller reports real disconnects).
+    var watchdog = null;
+    var watchdogExtended = false;
+    const armWatchdog = (ms) => {
+      watchdog = setTimeout(() => {
+        if (gotFirstToken) return;
+        if (!watchdogExtended) {
+          watchdogExtended = true;
+          showToast('Still waiting for the model — large models can take several minutes to load from a USB drive. Hang tight.', 'info');
+          armWatchdog(420000); // 3 + 7 = 10 min total ceiling
+          return;
+        }
+        timedOut = true; try { controller.abort(); } catch { }
+      }, ms);
+    };
+    armWatchdog(180000);
     const r = await fetch(`${OLLAMA}/api/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal });
     PromptStateManager.update('generating');
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -7801,7 +7823,9 @@ async function streamReplyFrom(conv, uIdx, opts = {}) {
       showToast(`"${model}" couldn't accept the image — answering from the text only. Vision needs a model like Gemma 4.`, 'warning');
     } else if (!controller.signal.aborted || timedOut) {
       let msg = timedOut
-        ? 'The model didn\'t respond within 3 minutes — it may still be loading, or an install is hogging the server. Try again in a moment.'
+        ? (watchdogExtended
+          ? 'The model didn\'t produce a response even after an extended wait — the server may be wedged. Try again, or restart the app.'
+          : 'The server stopped responding while waiting for the model. Try again in a moment.')
         : String(err).replace('Error:', '').trim();
       // Categorized errors with a recovery hint each
       if (timedOut) {

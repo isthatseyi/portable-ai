@@ -35,7 +35,7 @@ const ALLOWED_CHANNELS = [
   'open-custom-dir', 'mirror-custom'
 ];
 
-const ALLOWED_EVENT_CHANNELS = ['cache-move-progress', 'migration-progress'];
+const ALLOWED_EVENT_CHANNELS = ['cache-move-progress', 'migration-progress', 'ollama-reused'];
 
 contextBridge.exposeInMainWorld('electron', {
   invoke: (channel, ...args) => {

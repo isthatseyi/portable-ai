@@ -5276,6 +5276,8 @@ const IDBStore = {
     if (kv) { try { kv.clear(); } catch { } }
     const im = await this._tx('images', 'readwrite');
     if (im) { try { im.clear(); } catch { } }
+    const dc = await this._tx('docs', 'readwrite'); // v3 store — was orphaned on wipe
+    if (dc) { try { dc.clear(); } catch { } }
   },
 
   /* ----- vision-chat image blobs (v2 store) ----- */
@@ -6044,7 +6046,9 @@ function applySkill(id) {
   const after = ui.prompt.value.replace(/^\/\S*\s?/, '');
   if (s.template.includes('{{input}}')) {
     if (after.trim()) {
-      ui.prompt.value = s.template.replace('{{input}}', after.trim());
+      // Function replacement: user text containing $&, $1, $` etc. must be
+      // inserted literally, not expanded as replacement patterns.
+      ui.prompt.value = s.template.replace('{{input}}', () => after.trim());
     } else {
       const pos = s.template.indexOf('{{input}}');
       ui.prompt.value = s.template.replace('{{input}}', '');
@@ -6693,8 +6697,9 @@ const TONE_PROMPTS = {
   blunt_direct: "be direct, blunt, and efficient."
 };
 
+let _sendBusy = false; // reentrancy guard — `streaming` isn't set until after the IDB awaits below
 async function sendPrompt() {
-  if (streaming) return;
+  if (streaming || _sendBusy) return;
   // Cache-mode installs point Ollama at the empty host cache — the user's
   // models are temporarily invisible, so chatting would 404 confusingly.
   if (_cacheInstallActive) {
@@ -6724,6 +6729,8 @@ async function sendPrompt() {
     if (!gate.ok) { showToast(gate.msg, 'warning'); return; }
   }
   conv.model = model;
+  _sendBusy = true;
+  try {
   const user = { role: 'user', content: text, ts: ts() };
   if (hasDocs) {
     // Persist doc text FIRST (write-once); the message carries only metadata.
@@ -6763,6 +6770,7 @@ async function sendPrompt() {
   ui.prompt.style.height = 'auto'; // Reset textarea height
   const uIdx = conv.messages.length - 1;
   await streamReplyFrom(conv, uIdx);
+  } finally { _sendBusy = false; }
 }
 function regenerateLast() {
   if (streaming) return;
@@ -6843,6 +6851,7 @@ document.addEventListener('click', e => {
     return;
   }
   const ed = e.target.closest('.edit'); if (ed) {
+    if (streaming) return; // editing mid-stream would fork a second stream over the first
     const idx = +ed.dataset.idx; const conv = conversations.find(c => c.id === activeId); const msg = conv?.messages[idx];
     if (!msg || msg.role !== 'user') return;
     const wrap = $(`.msg[data-idx="${idx}"]`, ui.messages); const content = wrap?.querySelector('.content'); if (!content) return;
@@ -6856,6 +6865,7 @@ document.addEventListener('click', e => {
   }
   if (e.target.closest('.regen')) { regenerateLast(); return; }
   if (e.target.classList.contains('saveEdit') || e.target.closest('.saveEdit')) {
+    if (streaming) { showToast('Wait for the current response to finish (or press Stop) before saving an edit.', 'info'); return; }
     const btn = e.target.closest('.saveEdit');
     const idx = +btn.dataset.idx; const conv = conversations.find(c => c.id === activeId); const msg = conv?.messages[idx];
     if (!msg || msg.role !== 'user') return;
@@ -7281,6 +7291,9 @@ function deleteChat(e, id) {
     const title = (conv.title || 'this chat').slice(0, 40);
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
   }
+  // Deleting the chat that's mid-stream: kill the request too, or it keeps
+  // running the model against an orphaned conversation object.
+  if (streaming && activeId === id) stopStream();
   // Drop this chat's image blobs + doc texts from IDB (fire-and-forget)
   if (conv) {
     const imgIds = [], docIds = [];
@@ -7616,10 +7629,13 @@ async function streamReplyFrom(conv, uIdx, opts = {}) {
   // just {id, thumb, ...} metadata. A missing blob degrades to text-only.
   const history = conv.messages.slice(0, uIdx + 1);
   const convChars = history.reduce((a, m) => a + (m.content || '').length, 0);
+  // A model that already 400'd on images this session will 400 on HISTORY
+  // images too — skip hydrating them instead of failing+retrying every turn.
+  const skipImages = opts.noImages || _visionFailed.has((model || '').toLowerCase());
   for (const m of history) {
     const entry = { role: m.role, content: m.content };
-    if (m.images && !opts.noImages) entry.images = m.images; // legacy passthrough
-    if (!opts.noImages && m.attachments && m.attachments.length) {
+    if (m.images && !skipImages) entry.images = m.images; // legacy passthrough
+    if (!skipImages && m.attachments && m.attachments.length) {
       const imgs = await hydrateImagesBase64(m.attachments);
       if (imgs) entry.images = imgs;
       else console.warn('[PortableAI] Attachment blob(s) missing for a message — sent text-only.');
@@ -7863,7 +7879,10 @@ async function streamReplyFrom(conv, uIdx, opts = {}) {
       errDiv.style.display = 'flex';
       document.getElementById('retryBtn').onclick = () => {
         errDiv.style.display = 'none';
-        conv.messages.pop();
+        // Only drop a trailing assistant placeholder — pre-first-token aborts
+        // already removed it in the finally, and popping blind would eat the
+        // user's message instead.
+        if (conv.messages[conv.messages.length - 1]?.role === 'assistant') conv.messages.pop();
         streamReplyFrom(conv, uIdx);
       };
       if (err.name !== 'AbortError' && !timedOut) {
@@ -7875,6 +7894,14 @@ async function streamReplyFrom(conv, uIdx, opts = {}) {
   } finally {
     if (typeof watchdog !== 'undefined') clearTimeout(watchdog);
     streaming = null; streamingNode = null; ui.stop.style.display = 'none'; ui.send.style.display = 'grid'; hideLeftLoading();
+    // Aborted before ANY token (Stop or watchdog): drop the placeholder so a
+    // permanently blank assistant bubble isn't persisted, and clear the
+    // frozen typing-dots that stopStream leaves behind.
+    if (!gotFirstToken && !(asst.content || '').trim() && !(asst.thinking || '').trim()
+      && conv.messages[conv.messages.length - 1] === asst && !retryNoImages) {
+      conv.messages.pop();
+      renderMessages(false);
+    }
     // Persist whatever arrived (covers Stop-button aborts and stream errors,
     // where the success path's jsave never runs — partial replies survive reload).
     conv.updatedAt = Date.now();
@@ -12145,6 +12172,9 @@ async function init() {
 /* kick */
 // Register global cache-move-progress listener
 if (window.electron && window.electron.on) {
+  window.electron.on('ollama-reused', ({ port }) => {
+    showToast(`Connected to an Ollama that was already running on port ${port}. If that isn't PortableAI's own server, new model downloads will go to ITS storage (usually the computer's drive), not this stick.`, 'warning');
+  });
   window.electron.on('cache-move-progress', ({ label, index, total, percent }) => {
     const pctStr = percent !== undefined ? ` — ${percent}%` : '';
     const kind = label === 'blobs' ? 'model data' : label;

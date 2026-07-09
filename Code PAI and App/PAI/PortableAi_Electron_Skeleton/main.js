@@ -416,6 +416,9 @@ function normalizeModelsLayout(base) {
 
 // Global reference to the child process
 let ollamaChild = null;
+// True when we adopted an already-running Ollama we didn't spawn (see the
+// reuse branch in ensureEmbeddedOllama for why the user must be told).
+let reusedExternalOllama = false;
 
 async function stopEmbeddedOllama() {
   // Always drop runtime.json — even if we never spawned (reuse case), a stale file is worse than none.
@@ -464,13 +467,20 @@ async function ensureEmbeddedOllama(customModelsPath = null) {
     if (reuse) {
       // Something (a system Ollama, or a previous PortableAI that outlived us) is already
       // serving on this port. Reuse it instead of fighting for the port — just point the UI at it.
-      logLine(`[PortableAI] Reusing already-running Ollama on port ${OLLAMA_PORT}.`);
+      // KNOWN LIMITATION: we can't tell OUR leftover instance from a host-installed
+      // Ollama, and a foreign one stores models in ITS OWN models dir (usually the
+      // host's ~/.ollama) — so warn the user instead of silently breaking the
+      // "everything stays on the stick" promise.
+      reusedExternalOllama = true;
+      logLine(`[PortableAI] Reusing already-running Ollama on port ${OLLAMA_PORT} — if this isn't PortableAI's own instance, model pulls will land in ITS models directory (likely the host drive), and connector mode can't rebind it to the LAN.`);
       writeRuntimeFile(0, customModelsPath || DEFAULT_MODELS_DIR); // pid 0 = not ours
       if (win) {
         win.webContents.executeJavaScript(`window.__OLLAMA_PORT = ${OLLAMA_PORT}`).catch(() => { });
+        win.webContents.send('ollama-reused', { port: OLLAMA_PORT });
       }
       return;
     }
+    reusedExternalOllama = false;
     logLine(`[PortableAI] Selected free port: ${OLLAMA_PORT}`);
   } catch (e) {
     logLine(`[PortableAI] Port scan failed (${e.message}); no free port in 11434-11440.`);
@@ -746,6 +756,14 @@ function createWindow() {
   }
   logLine(`[PortableAI] Loading UI from: ${found}`);
   win.loadFile(found);
+
+  // Boot-time port reuse happens before the window exists — deliver the
+  // "you're on someone else's Ollama" warning once the UI can show it.
+  win.webContents.on('did-finish-load', () => {
+    if (reusedExternalOllama) {
+      win.webContents.send('ollama-reused', { port: OLLAMA_PORT });
+    }
+  });
 
   if (process.env.OPEN_DEVTOOLS === '1') {
     win.webContents.openDevTools({ mode: 'detach' });
@@ -1064,6 +1082,9 @@ ipcMain.handle('execute-migration', async (event, destPath) => {
 
 // IPC: Set Models Directory
 ipcMain.handle('set-models-dir', async (event, dirPath) => {
+  // A cache-mode install has Ollama pointed at the host cache — restarting it
+  // here would abandon the in-flight download and later merge stale files.
+  if (isCacheMode) throw new Error('A model install is in progress — try again when it finishes.');
   const config = loadConfig();
   // If null, reset to default
   if (!dirPath) {
@@ -1155,6 +1176,9 @@ function startWebServer() {
 }
 
 async function setConnectorMode(enable) {
+  // Toggling mid-cache-install would restart Ollama away from the host cache
+  // and abandon the in-flight download.
+  if (isCacheMode) throw new Error('A model install is in progress — change connector mode when it finishes.');
   connectorMode = !!enable;
   const cfg = loadConfig();
   cfg.connectorMode = connectorMode;
@@ -1281,7 +1305,10 @@ ipcMain.handle('prepare-cache-install', async (_e, opts) => {
   }
   isCacheMode = true;
   try {
-    await fse.ensureDir(CACHE_DIR);
+    // Start from a CLEAN cache: leftovers from a crashed/aborted previous
+    // install would otherwise get merged into the destination later —
+    // truncated blobs are content-addressed, so they'd never self-heal.
+    await fse.emptyDir(CACHE_DIR);
     // Restart Ollama pointing to CACHE_DIR
     await ensureEmbeddedOllama(CACHE_DIR);
     return { mode: 'cache', cacheDir: CACHE_DIR };
@@ -1351,8 +1378,13 @@ ipcMain.handle('finish-cache-install', async () => {
           if (win) win.webContents.send('cache-move-progress', { label, index: i + 1, total: entries.length });
           await mergeMoveDir(srcPath, dstPath, label); // recurse — merge, don't replace
         } else {
-          // Cross-device moves of large AI models block indefinitely. Show byte progress!
-          if (stat.size > 50 * 1024 * 1024) {
+          // EVERY file takes the crash-safe stream+verify+rename path — a
+          // plain cross-device fse.move of even a small manifest can leave a
+          // truncated file at the FINAL path on crash, and content-addressed
+          // names mean it would never be repaired by a retry. Byte-progress
+          // events are only worth sending for big files.
+          const showBytes = stat.size > 50 * 1024 * 1024;
+          {
             // Crash-safe move: stream into dst+'.tmp', verify the byte count,
             // rename into place, and only then delete the source. A force-quit
             // mid-copy leaves a harmless .tmp instead of a truncated blob that
@@ -1369,8 +1401,8 @@ ipcMain.handle('finish-cache-install', async () => {
               rs.on('data', (chunk) => {
                 copied += chunk.length;
                 const pct = Math.round((copied / stat.size) * 100);
-                // Throttle UI updates to every 1% change
-                if (pct !== lastPct) {
+                // Throttle UI updates to every 1% change; per-file counts only for small files
+                if (showBytes && pct !== lastPct) {
                   lastPct = pct;
                   if (win) win.webContents.send('cache-move-progress', { label, index: i + 1, total: entries.length, percent: pct });
                 }
@@ -1389,9 +1421,7 @@ ipcMain.handle('finish-cache-install', async () => {
             await fse.move(tmpPath, dstPath, { overwrite: true }); // same-volume rename — atomic enough for exFAT
             // Only now is it safe to drop the original.
             await fse.remove(srcPath);
-          } else {
-            if (win) win.webContents.send('cache-move-progress', { label, index: i + 1, total: entries.length });
-            await fse.move(srcPath, dstPath, { overwrite: true }); // safe: blobs are content-addressed
+            if (!showBytes && win) win.webContents.send('cache-move-progress', { label, index: i + 1, total: entries.length });
           }
         }
       }
@@ -1400,6 +1430,10 @@ ipcMain.handle('finish-cache-install', async () => {
 
     await mergeMoveDir(srcBlobs, destBlobs, 'blobs');
     await mergeMoveDir(srcManifests, destManifests, 'manifests');
+
+    // Leave nothing behind on the host — prepare-cache-install also empties
+    // this, but a clean finish shouldn't depend on the next install's prep.
+    try { await fse.remove(CACHE_DIR); } catch { }
 
     logLine('[PortableAI] Cache move complete.');
   } catch (e) {
@@ -1416,6 +1450,7 @@ ipcMain.handle('finish-cache-install', async () => {
 });
 
 ipcMain.handle('restart-ollama', async () => {
+  if (isCacheMode) throw new Error('A model install is in progress — try again when it finishes.');
   logLine('[PortableAI] Manual restart requested.');
   const cfg = loadConfig();
   const dest = cfg.customModelsPath || DEFAULT_MODELS_DIR;
@@ -1588,9 +1623,21 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
-app.on('will-quit', async () => {
-  await stopEmbeddedOllama();
-  try { fs.unlinkSync(RUNTIME_FILE); } catch { }
+let _quitCleanupDone = false;
+app.on('will-quit', (event) => {
+  // Electron does NOT await async will-quit listeners — without
+  // preventDefault the process can die before the SIGKILL-escalation timer
+  // inside stopEmbeddedOllama ever fires, orphaning a SIGTERM-ignoring
+  // ollama (the exact "port in use on next launch" failure).
+  if (_quitCleanupDone) return;
+  event.preventDefault();
+  _quitCleanupDone = true;
+  stopEmbeddedOllama()
+    .catch(() => { })
+    .then(() => {
+      try { fs.unlinkSync(RUNTIME_FILE); } catch { }
+      app.exit(0);
+    });
 });
 
 app.on('before-quit', async () => {

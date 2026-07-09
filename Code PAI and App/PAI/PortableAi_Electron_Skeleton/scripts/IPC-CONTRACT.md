@@ -20,7 +20,7 @@ Generic, allow-listed IPC plus named convenience methods.
 | Method | Returns | Notes |
 |---|---|---|
 | `electron.invoke(channel, ...args)` | `Promise<any>` | Generic invoke; rejects if `channel` is not in the allow-list below. |
-| `electron.on(channel, cb)` | — | Subscribe to a main→renderer event. Only `cache-move-progress`, `migration-progress` are allowed. |
+| `electron.on(channel, cb)` | — | Subscribe to a main→renderer event. Only `cache-move-progress`, `migration-progress`, `ollama-reused` are allowed. |
 | `electron.getPort()` | `Promise<number>` | Current Ollama port (11434–11440). |
 | `electron.getRuntime()` | `Promise<object>` | Contents of `runtime.json` — `{ port, pid, os, arch, timestamp, model_dir, version }`. |
 | `electron.getSettings()` | `Promise<object>` | Parsed `config/settings.json`. Returns `{}` (never `null`) if the file is missing. |
@@ -60,6 +60,7 @@ Prefer `await window.electron.getPort()` when you need a guaranteed-fresh value.
 
 `cache-move-progress` — `{ label, index, total, percent? }`
 `migration-progress`  — `{ phase, detail }`
+`ollama-reused`       — `{ port }` (an already-running Ollama was adopted instead of spawning our own; models may not live on the stick)
 
 ---
 
